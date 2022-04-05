@@ -1,0 +1,2 @@
+add_subdirectory(loguru)
+add_subdirectory(nlohmann)
