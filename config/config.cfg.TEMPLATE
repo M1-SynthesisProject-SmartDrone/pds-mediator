@@ -1,0 +1,15 @@
+
+postgresql:
+{
+    username: "tester";
+    password: "testmdp";
+    database_name: "testdb";
+    host: "127.0.0.1";
+    port: 5432;
+};
+
+mongodb:
+{
+    host: "127.0.0.1";
+    port: 27017;
+};

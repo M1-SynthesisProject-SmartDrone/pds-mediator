@@ -22,6 +22,7 @@ If the script doesn't work for any reason, you can compile yourself by typing :
 
 ```
 $ sudo mkdir build
+$ sudo mkdir bin
 $ cd build
 $ cmake ..
 $ make

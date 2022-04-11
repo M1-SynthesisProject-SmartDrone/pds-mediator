@@ -93,9 +93,9 @@ file(COPY config/config.cfg DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 add_executable(${APP_NAME} ${drone_SRC})
 
 target_link_libraries(${APP_NAME} PUBLIC
-    cxxopts 
     loguru
     nlohmann
     -lpthread
     -lconfig++
+    -lpqxx -lpq
 )
