@@ -2,14 +2,29 @@
 
 #include "config/config_parser.h"
 #include "postgresql/PostgresqlConnection.h"
+#include "mongodb/MongodbConnection.h"
 
 using namespace std;
+
+void libpqxxExample(unique_ptr<PostgresqlConnection> postgresConnection);
+void mongodbExample(unique_ptr<MongodbConnection> mongodbConnection);
 
 int main(int argc, const char* argv[])
 {
     const ConfigParams config = parseConfig(argc, argv);
 
     auto postgresConnection = make_unique<PostgresqlConnection>(config.postgres);
+    auto mongodbConnection = make_unique<MongodbConnection>(config.mongoDb);
+
+
+
+    return 0;
+}
+
+// Examples are not tested, just proof of concepts
+
+void libpqxxExample(unique_ptr<PostgresqlConnection> postgresConnection)
+{
     // ==== Example insertion ====
     auto transaction1 = postgresConnection->createTransaction(); // instance of pqxx::work
     // see PostgresqlConnection#prepareStatements()
@@ -53,11 +68,58 @@ int main(int argc, const char* argv[])
     pqxx::stream_from stream = pqxx::stream_from::query(*(transaction3.get()), "SELECT * FROM test;");
     // The tuple should have the same form as we want to retrieve
     std::tuple<std::string, std::string> row;
-    while(stream >> row)
+    while (stream >> row)
     {
         std::cout << "Name : " << std::get<0>(row) << " Tel : " << std::get<0>(row) << "\n";
     }
     transaction4->commit();
+}
 
-    return 0;
+// tutorial available here : http://mongocxx.org/mongocxx-v3/tutorial/
+void mongodbExample(unique_ptr<MongodbConnection> mongodbConnection)
+{
+    // The database will be created if not exists here
+    auto database = mongodbConnection->getDatabase();
+
+    // ==== Check if a collection exists (without creating it)
+    bool hasCollection = database.has_collection("collection_id");
+    auto collection = database["collection_id"];
+
+    // ==== Example insertion ====
+    // Create the document (a json object)
+    auto builder = bsoncxx::builder::stream::document{};
+    bsoncxx::document::value doc_value = builder
+        << "name" << "billy"
+        << "num" << "0102030405"
+        
+        << "int_array" << bsoncxx::builder::stream::open_array // start json array
+            << 1 << 2 << 3
+        << bsoncxx::builder::stream::close_array // end json array
+
+        << "object" << bsoncxx::builder::stream::open_document // start json object
+            << "attr1" << "gilbert"
+            << "attr2" << "savané"
+        << bsoncxx::builder::stream::close_document // end json object
+
+        << bsoncxx::builder::stream::finalize; // builder.build()
+
+    // insert it
+    collection.insert_one(doc_value.view());
+
+    // ==== Example search ====
+    auto filter = bsoncxx::builder::stream::document{} 
+        << "name" << "billy"
+        << bsoncxx::builder::stream::finalize;
+    auto optionalDocument = collection.find_one(filter.view());
+    if (optionalDocument)
+    {
+        cout << bsoncxx::to_json(optionalDocument.value()) << "\n";
+    }
+
+    // ==== Example iteration ====
+    auto cursor = collection.find({}); // can add filters like above if wanted
+    for (auto document : cursor)
+    {
+        cout << bsoncxx::to_json(document) << "\n";
+    }
 }

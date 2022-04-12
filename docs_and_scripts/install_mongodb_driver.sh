@@ -3,8 +3,6 @@
 ## Requires root permissions
 
 echo "Download packages"
-sudo apt-get install -y libmongoc
-sudo apt-get install -y libbson
 sudo apt-get install -y libmongoc-dev
 sudo apt-get install -y libbson-dev
 sudo ldconfig

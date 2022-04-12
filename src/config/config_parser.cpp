@@ -42,6 +42,7 @@ ConfigParams parseConfig(int argc, const char *argv[])
 
     const auto& mongoSettings = root["mongodb"];
     const auto mongoConfig = MongoDbParams{
+        mongoSettings["database_name"],
         mongoSettings["host"],
         mongoSettings["port"]
     };

@@ -14,6 +14,7 @@ struct PostgresParams
 
 struct MongoDbParams
 {
+    std::string databaseName;
     std::string host;
     int port;
 };

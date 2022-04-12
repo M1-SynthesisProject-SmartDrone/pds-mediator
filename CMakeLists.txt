@@ -46,6 +46,7 @@ else()
     message("Fail : You must hae PkgConfig installed")
 endif()
 
+find_package(mongocxx REQUIRED)
 find_library(libconfig++ libconfig++)
 
 message("- Checking : Thread")
@@ -61,7 +62,8 @@ link_libraries(
     ${CMAKE_THREAD_LIBS_INIT}
     dl
     config++
-    panel 
+    panel
+    mongo::mongocxx_shared
 )
 
 # target_link_libraries(SmartDrone config++)
@@ -98,4 +100,5 @@ target_link_libraries(${APP_NAME} PUBLIC
     -lpthread
     -lconfig++
     -lpqxx -lpq
+    -lmongocxx -lbsoncxx
 )
