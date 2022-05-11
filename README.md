@@ -46,3 +46,60 @@ sudo apt-get install libpq-dev
 ```
 
 and watch out to have the same version of Ubuntu for libpq5 that the one mentionned on the previous error
+
+## Communication Protocol
+
+Here is all the possible communication we can have with the database server.
+
+### Save a trip
+
+To save a trip, you have to send first this request:
+
+```
+{
+    "requestType":"TR_SAVE"
+}
+
+```
+
+And you will receive this :
+
+```
+{
+	"responseType:" "RESP_TR_SAVE",
+	"isLaunched" : boolean // true or false depending if it works or not
+}
+```
+
+While the server is saving, you have to send this request to save a position & image:
+
+```
+{
+    "requestType" : "REGISTER", 
+    "tr_id" : 1,                  // id of the trip, integer
+    "latitude" : 1234564,         // latitude, integer
+    "longitude" : 1234561,        // longitude, integer
+    "rotation" : 21,              // rotation, integer
+    "time" : 164445158451488,     // time, integer
+    collectionName" : "collectionName", 
+    "image" : "ImageName"
+}
+```
+
+When you want to stop saving the trip, you just have to send this request :
+```
+{
+	"responseType" : "END_TR_SAVE",
+	"tripName" : "NOMTRAJET"
+}
+```
+
+And you will receive this :
+```
+{
+	"responseType": "RESP_END_TR_SAVE",
+	"isLaunched" : boolean // true or false depending if it works or not
+}
+```
+
+
