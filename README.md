@@ -27,3 +27,22 @@ $ cd build
 $ cmake ..
 $ make
 ```
+
+## Help if error while trying to install libpq-dev
+
+if you have the following error while trying to install libpq-dev :
+```
+Les paquets suivants contiennent des dépendances non satisfaites :
+ libpq-dev : Dépend: libpq5 (= 13.6-0ubuntu0.21.10.1) mais 14.2-1.pgdg21.10+1 devra être installé
+E: Impossible de corriger les problèmes, des paquets défectueux sont en mode « garder en l'état ».
+```
+
+consider install this dependancy before
+
+```
+sudo apt install libpq5=13.6-0ubuntu0.21.10.1
+
+sudo apt-get install libpq-dev
+```
+
+and watch out to have the same version of Ubuntu for libpq5 that the one mentionned on the previous error

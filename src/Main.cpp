@@ -3,20 +3,59 @@
 #include "config/config_parser.h"
 #include "postgresql/PostgresqlConnection.h"
 #include "mongodb/MongodbConnection.h"
+#include "network/UDPSocket.h"
+#include <loguru/loguru.hpp>
+#include "request_analyse/RequestAnalyser.h"
 
 using namespace std;
 
 void libpqxxExample(unique_ptr<PostgresqlConnection> postgresConnection);
 void mongodbExample(unique_ptr<MongodbConnection> mongodbConnection);
 
-int main(int argc, const char* argv[])
+int main(int argc, char* argv[])
 {
+    // ----- VARIABLES -----
+    auto requestAnalyser = RequestAnalyser();
+    bool isRunning = true;
+    char* buffer = (char *)malloc(sizeof(char)*80);
+    sockaddr_in sender;
+
+
+    LOG_F(INFO, "Starting database server");
+    LOG_F(INFO, "Parsing configuration ...");
     const ConfigParams config = parseConfig(argc, argv);
+    // initialise logger
+    loguru::init(argc, argv);
 
-    auto postgresConnection = make_unique<PostgresqlConnection>(config.postgres);
-    auto mongodbConnection = make_unique<MongodbConnection>(config.mongoDb);
+    LOG_F(INFO, "Parsing configuration done");
+    LOG_F(INFO, "\tInput IP : %s \tInput port : %d \tOutput port : %d",config.communication.inputip.c_str() ,config.communication.inputreceiveport,config.communication.inputsendport );
+    LOG_F(INFO, "\tOutput IP : %s \tInput port : %d \tOutput port : %d ", config.communication.outputip.c_str() ,config.communication.outputreceiveport,config.communication.outputsendport);
+
+    // creating object for UDPCommunication
+    auto dataInput = UDPSocket();
+    dataInput.bindPort(config.communication.inputreceiveport );
+    
+    auto dataOutput = UDPSocket();
+
+    // main thread of the server
+    LOG_F(INFO, "-> Starting main thread of the program");
+    while(isRunning){
+        bzero(buffer, 80);
+        
+        // await for a request from input IP & entry port
+        LOG_F(INFO, "Waiting for a request ... ");
+        dataInput.receiveMessage(buffer, 80, sender);
+        //printf("buffer content:%s\n", buffer );
+        
+        // analyse request & execute appropriate code
+        requestAnalyser.parseRequest(buffer);
+    }
+
+    // auto postgresConnection = make_unique<PostgresqlConnection>(config.postgres);
+    // auto mongodbConnection = make_unique<MongodbConnection>(config.mongoDb);
 
 
+    LOG_F(INFO, "Starting database server ...");
 
     return 0;
 }

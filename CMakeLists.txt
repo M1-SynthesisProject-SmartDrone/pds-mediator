@@ -100,5 +100,5 @@ target_link_libraries(${APP_NAME} PUBLIC
     -lpthread
     -lconfig++
     -lpqxx -lpq
-    -lmongocxx -lbsoncxx
+    -lmongocxx -lbsoncxx 
 )

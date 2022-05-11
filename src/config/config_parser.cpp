@@ -9,7 +9,7 @@ namespace fs = std::filesystem;
 /**
  * Find the config file path from the executable path
  */
-fs::path getConfigPath(const char *argv[])
+fs::path getConfigPath(char *argv[])
 {
     // argv[0] contains the executable called
     fs::path exePath(argv[0]);
@@ -22,7 +22,7 @@ fs::path getConfigPath(const char *argv[])
     return configPath;
 }
 
-ConfigParams parseConfig(int argc, const char *argv[])
+ConfigParams parseConfig(int argc, char *argv[])
 {
     fs::path configPath = getConfigPath(argv);
 
@@ -47,5 +47,16 @@ ConfigParams parseConfig(int argc, const char *argv[])
         mongoSettings["port"]
     };
 
-    return ConfigParams(postgresConfig, mongoConfig);
+    const auto& commSettings = root["ports"];
+    const auto communcationConfig = CommunicationpParams{
+        commSettings["inputip"],
+        commSettings["inputreceiveport"],
+        commSettings["inputsendport"],
+        commSettings["outputip"],
+        commSettings["outputreceiveport"],
+        commSettings["outputsendport"],
+
+    };
+
+    return ConfigParams(postgresConfig, mongoConfig, communcationConfig);
 }

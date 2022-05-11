@@ -14,3 +14,12 @@ mongodb:
     host: "127.0.0.1";
     port: 27017;
 };
+
+ports:{
+    inputip: "127.0.0.1";
+    inputreceiveport: 7000;
+    inputsendport: 7001;
+    outputip: "127.0.0.1";
+    outputreceiveport: 7002;
+    outputsendport: 7003;
+};

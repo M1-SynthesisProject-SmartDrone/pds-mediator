@@ -19,6 +19,16 @@ struct MongoDbParams
     int port;
 };
 
+struct CommunicationpParams
+{
+    std::string inputip;
+    int inputreceiveport;
+    int inputsendport;
+    std::string outputip;
+    int outputreceiveport;
+    int outputsendport;
+
+};
 
 /**
  * This struct contains all data parsed in the config file
@@ -27,13 +37,14 @@ struct ConfigParams
 {
     PostgresParams postgres;
     MongoDbParams mongoDb;
+    CommunicationpParams communication;
 
-    ConfigParams(PostgresParams postgres, MongoDbParams mongoDb)
+    ConfigParams(PostgresParams postgres, MongoDbParams mongoDb, CommunicationpParams communication)
     {
         this->postgres = postgres;
         this->mongoDb = mongoDb;
+        this->communication = communication;
     }
 };
-
 
 #endif // __CONFIGPARAMS_H__
