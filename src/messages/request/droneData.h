@@ -14,18 +14,16 @@ struct DroneDataRegister : Request{
     int longitude;
     int rotation;
     time_t date;
-    string collectionName;
     string image;
 
 
-    DroneDataRegister(int tr_id, int latitude, int longitude, int rotation, time_t date, string collectionName, string image){
+    DroneDataRegister(int tr_id, int latitude, int longitude, int rotation, time_t date, string image){
         this->RequestType = MESSAGE_TYPE::REGISTER;
         this->tr_id = tr_id;
         this->latitude = latitude;
         this->longitude = longitude;
         this->rotation = rotation;
         this->date = date;
-        this->collectionName = collectionName;
         this->image=image;
     }
 

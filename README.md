@@ -81,8 +81,7 @@ While the server is saving, you have to send this request to save a position & i
     "longitude" : 1234561,        // longitude, integer
     "rotation" : 21,              // rotation, integer
     "time" : 164445158451488,     // time, integer
-    collectionName" : "collectionName", 
-    "image" : "ImageName"
+    "image" : "Image"
 }
 ```
 
