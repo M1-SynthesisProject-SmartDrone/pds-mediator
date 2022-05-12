@@ -76,10 +76,14 @@ While the server is saving, you have to send this request to save a position & i
 ```
 {
     "requestType" : "REGISTER", 
-    "tr_id" : 1,                  // id of the trip, integer
+    "altitude" : 123,             // integer
     "latitude" : 1234564,         // latitude, integer
     "longitude" : 1234561,        // longitude, integer
     "rotation" : 21,              // rotation, integer
+    "temperature" : 12.23,        // float
+    "pressure" : 1245.12,         // float
+    "batteryRemaining" : 73,      // Integer        
+    "isCheckpoint" : True,         // bool, 
     "time" : 164445158451488,     // time, integer
     "image" : "Image"
 }
