@@ -107,7 +107,7 @@ DroneDataRegister* RequestAnalyser::parseDroneDataRequest(int tr_id, nlohmann::j
     time_t date = obj["time"].get<time_t>();
     string collectionName = obj["collectionName"];
     string imageName = obj["imageName"];
-    return new DroneDataRegister(tr_id, latitude, longitude, rotation, date, collectionName, imageName);
+    return new DroneDataRegister(tr_id, latitude, longitude, rotation, date, imageName);
 }
 
 TripSaveRequest* RequestAnalyser::parseTripSaveRequest(nlohmann::json& obj){
