@@ -20,13 +20,17 @@
 #include "../messages/request/TripSaveRequest.h"
 #include "../messages/request/endTripSaveRequest.h"
 #include "../request_executer/RequestExecuter.h"
+#include "../network/UDPSocket.h"
 
 using namespace std;
 using namespace nlohmann;
 
-RequestAnalyser::RequestAnalyser(){
-}
 
+
+RequestAnalyser::RequestAnalyser(ConfigParams conf, std::shared_ptr<UDPSocket> inputSocket, std::shared_ptr<UDPSocket> outputSocket): config(conf), executer(conf, inputSocket, outputSocket)
+{
+
+}
 
 RequestAnalyser::~RequestAnalyser()
 {
@@ -50,6 +54,22 @@ void RequestAnalyser::parseRequest(string request)
     
 }
 
+bool RequestAnalyser::parseSaveRequest(std::string request, int tr_id, int pointId){
+    printf("request received :%s \n", request.c_str());
+    nlohmann::json document = getJSONFromRequest(request);
+
+    LOG_F(INFO,"tranform JSON into accurate object");
+    
+    Request* obj = getSaveRequestsFromDocument(document, tr_id, pointId);
+
+    executer.executeRequest(obj);
+
+    if(obj->RequestType == MESSAGE_TYPE::REGISTER){
+        return true;
+    }
+    return false;
+}
+
 
 nlohmann::json RequestAnalyser::getJSONFromRequest(string request){
     LOG_F(INFO,"Parsing received request");
@@ -60,6 +80,32 @@ nlohmann::json RequestAnalyser::getJSONFromRequest(string request){
     }
     LOG_F(INFO,"Parsing received request done !");
     return json;
+}
+
+Request* RequestAnalyser::getSaveRequestsFromDocument(nlohmann::json& document, int tr_id, int pointId){
+    string requestType = document["requestType"];
+    LOG_F(INFO,"REQUEST FOUND : %s", requestType.c_str());
+    MESSAGE_TYPE req = messagesTypeMap[requestType] ;
+    switch ( req )
+    {
+    case MESSAGE_TYPE::REGISTER :
+        LOG_F(INFO, "-> REQUEST RECEIVED : REGISTER");
+        return parseDroneDataRequest(tr_id, pointId, document);
+        break;
+    case MESSAGE_TYPE::END_TR_SAVE :
+        LOG_F(INFO, "-> REQUEST RECEIVED : END_TR_SAVE");
+        return parseEndTripSaveRequest(document);
+        break;
+   
+    // case MESSAGE_TYPE::END_TR_SAVE : 
+    //     LOG_F(INFO, "-> REQUEST RECEIVED : END_TR_SAVE");
+    //     return parseEndTripSaveRequest(document);
+    //     break;
+    default:
+        LOG_F(INFO, "-> REQUEST RECEIVED NOT IDENTIFIED");
+        break;
+    }
+    return nullptr;
 }
 
 Request* RequestAnalyser::getRequestFromDocument(nlohmann::json& document){
@@ -100,13 +146,18 @@ DataRequest* RequestAnalyser::parseDataRequest(nlohmann::json& obj){
     return new DataRequest(valueType, tr_id, tr_position);
 }
 
-DroneDataRegister* RequestAnalyser::parseDroneDataRequest(int tr_id, nlohmann::json& obj){
+DroneDataRegister* RequestAnalyser::parseDroneDataRequest(int tr_id, int pointId, nlohmann::json& obj){
+    int altitude = obj["altitude"].get<int>();
     int latitude = obj["latitude"].get<int>();
     int longitude = obj["longitude"].get<int>();
     int rotation = obj["rotation"].get<int>();
     time_t date = obj["time"].get<time_t>();
-    string imageName = obj["imageName"];
-    return new DroneDataRegister(tr_id, latitude, longitude, rotation, date, imageName);
+    bool isCheckpoint = obj["isCheckpoint"].get<bool>();
+    float temperature = obj["temperature"].get<float>();
+    float pressure =  obj["pressure"].get<float>();
+    int batteryRemaining = obj["batteryRemaining"].get<int>();
+    string imageName = obj["image"];
+    return new DroneDataRegister(tr_id, pointId, altitude, latitude, longitude, rotation, isCheckpoint, pressure, temperature, batteryRemaining, date, imageName);
 }
 
 TripSaveRequest* RequestAnalyser::parseTripSaveRequest(nlohmann::json& obj){

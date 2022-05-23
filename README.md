@@ -101,7 +101,7 @@ And you will receive this :
 ```
 {
 	"responseType": "RESP_END_TR_SAVE",
-	"isLaunched" : boolean // true or false depending if it works or not
+	"isDone" : boolean // true or false depending if it works or not
 }
 ```
 

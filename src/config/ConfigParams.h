@@ -39,6 +39,8 @@ struct ConfigParams
     MongoDbParams mongoDb;
     CommunicationpParams communication;
 
+
+
     ConfigParams(PostgresParams postgres, MongoDbParams mongoDb, CommunicationpParams communication)
     {
         this->postgres = postgres;

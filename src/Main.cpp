@@ -14,16 +14,19 @@ void mongodbExample(unique_ptr<MongodbConnection> mongodbConnection);
 
 int main(int argc, char* argv[])
 {
-    // ----- VARIABLES -----
-    auto requestAnalyser = RequestAnalyser();
-    bool isRunning = true;
-    char* buffer = (char *)malloc(sizeof(char)*80);
-    sockaddr_in sender;
 
 
     LOG_F(INFO, "Starting database server");
     LOG_F(INFO, "Parsing configuration ...");
     const ConfigParams config = parseConfig(argc, argv);
+
+    // ----- VARIABLES -----
+    
+    bool isRunning = true;
+    char* buffer = (char *)malloc(sizeof(char)*512);
+    sockaddr_in sender;
+
+
     // initialise logger
     loguru::init(argc, argv);
 
@@ -32,19 +35,21 @@ int main(int argc, char* argv[])
     LOG_F(INFO, "\tOutput IP : %s \tInput port : %d \tOutput port : %d ", config.communication.outputip.c_str() ,config.communication.outputreceiveport,config.communication.outputsendport);
 
     // creating object for UDPCommunication
-    auto dataInput = UDPSocket();
-    dataInput.bindPort(config.communication.inputreceiveport );
+    auto dataInput = make_shared<UDPSocket>();
+    dataInput->bindPort(config.communication.inputreceiveport );
     
-    auto dataOutput = UDPSocket();
+    auto dataOutput = make_shared<UDPSocket>();
 
+
+    auto requestAnalyser = RequestAnalyser(config, dataInput, dataOutput);
     // main thread of the server
     LOG_F(INFO, "-> Starting main thread of the program");
     while(isRunning){
-        bzero(buffer, 80);
+        bzero(buffer, 512);
         
         // await for a request from input IP & entry port
         LOG_F(INFO, "Waiting for a request ... ");
-        dataInput.receiveMessage(buffer, 80, sender);
+        dataInput->receiveMessage(buffer, 512, sender);
         //printf("buffer content:%s\n", buffer );
         
         // analyse request & execute appropriate code
@@ -62,57 +67,57 @@ int main(int argc, char* argv[])
 
 // Examples are not tested, just proof of concepts
 
-void libpqxxExample(unique_ptr<PostgresqlConnection> postgresConnection)
-{
-    // ==== Example insertion ====
-    auto transaction1 = postgresConnection->createTransaction(); // instance of pqxx::work
-    // see PostgresqlConnection#prepareStatements()
-    transaction1->exec_prepared(PostgresqlConnection::STATEMENT_TEST, "billy", "0109050402");
-    transaction1->commit();
+// void libpqxxExample(unique_ptr<PostgresqlConnection> postgresConnection)
+// {
+//     // ==== Example insertion ====
+//     auto transaction1 = postgresConnection->createTransaction(); // instance of pqxx::work
+//     // see PostgresqlConnection#prepareStatements()
+//     transaction1->exec_prepared(PostgresqlConnection::STATEMENT_TEST, "billy", "0109050402");
+//     transaction1->commit();
 
-    // ==== Example iteration (all in-memory retrieving (BAD, but simple)) ====
-    auto transaction2 = postgresConnection->createTransaction();
-    pqxx::result result(transaction2->exec("SELECT * FROM test;"));
-    for (auto row : result)
-    {
-        std::cout << "Name : " << row["name"] << " Tel : " << row["num_tel"] << "\n";
-    }
-    transaction2->commit();
+//     // ==== Example iteration (all in-memory retrieving (BAD, but simple)) ====
+//     auto transaction2 = postgresConnection->createTransaction();
+//     pqxx::result result(transaction2->exec("SELECT * FROM test;"));
+//     for (auto row : result)
+//     {
+//         std::cout << "Name : " << row["name"] << " Tel : " << row["num_tel"] << "\n";
+//     }
+//     transaction2->commit();
 
-    // ==== Example iteration (cursor-based approach) ====
-    // ! Warning : not tested, but should work
-    auto transaction3 = postgresConnection->createTransaction();
-    string query = "SELECT * FROM test;";
-    pqxx::stateless_cursor<pqxx::cursor_base::read_only, pqxx::cursor_base::owned>
-        cursor(*(transaction3.get()), query, "myCursor", false);
-    size_t idx = 0;
-    size_t rowsPerBatch = 10; // We will get 10 rows for each cursor iteration (batch-retrieving)
-    pqxx::result res;
-    do
-    {
-        res = cursor.retrieve(idx, idx + rowsPerBatch);
-        idx += rowsPerBatch;
+//     // ==== Example iteration (cursor-based approach) ====
+//     // ! Warning : not tested, but should work
+//     auto transaction3 = postgresConnection->createTransaction();
+//     string query = "SELECT * FROM test;";
+//     pqxx::stateless_cursor<pqxx::cursor_base::read_only, pqxx::cursor_base::owned>
+//         cursor(*(transaction3.get()), query, "myCursor", false);
+//     size_t idx = 0;
+//     size_t rowsPerBatch = 10; // We will get 10 rows for each cursor iteration (batch-retrieving)
+//     pqxx::result res;
+//     do
+//     {
+//         res = cursor.retrieve(idx, idx + rowsPerBatch);
+//         idx += rowsPerBatch;
 
-        // same as example above here
-        for (auto row : result)
-        {
-            std::cout << "Name : " << row["name"] << " Tel : " << row["num_tel"] << "\n";
-        }
-    } while (res.size() == rowsPerBatch); // If we have less results than wanted, we were on our last loop
-    transaction3->commit();
+//         // same as example above here
+//         for (auto row : result)
+//         {
+//             std::cout << "Name : " << row["name"] << " Tel : " << row["num_tel"] << "\n";
+//         }
+//     } while (res.size() == rowsPerBatch); // If we have less results than wanted, we were on our last loop
+//     transaction3->commit();
 
-    // ==== Example iteration (stream-based approach) ====
-    // ! Warning : not tested, but should work
-    auto transaction4 = postgresConnection->createTransaction();
-    pqxx::stream_from stream = pqxx::stream_from::query(*(transaction3.get()), "SELECT * FROM test;");
-    // The tuple should have the same form as we want to retrieve
-    std::tuple<std::string, std::string> row;
-    while (stream >> row)
-    {
-        std::cout << "Name : " << std::get<0>(row) << " Tel : " << std::get<0>(row) << "\n";
-    }
-    transaction4->commit();
-}
+//     // ==== Example iteration (stream-based approach) ====
+//     // ! Warning : not tested, but should work
+//     auto transaction4 = postgresConnection->createTransaction();
+//     pqxx::stream_from stream = pqxx::stream_from::query(*(transaction3.get()), "SELECT * FROM test;");
+//     // The tuple should have the same form as we want to retrieve
+//     std::tuple<std::string, std::string> row;
+//     while (stream >> row)
+//     {
+//         std::cout << "Name : " << std::get<0>(row) << " Tel : " << std::get<0>(row) << "\n";
+//     }
+//     transaction4->commit();
+// }
 
 // tutorial available here : http://mongocxx.org/mongocxx-v3/tutorial/
 void mongodbExample(unique_ptr<MongodbConnection> mongodbConnection)

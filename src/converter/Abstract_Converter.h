@@ -3,6 +3,7 @@
 
 #include "../messages/request/Request.h"
 #include "../messages/response/Response.h"
+#include <nlohmann/json.hpp>
 
 using namespace std;
 
@@ -14,7 +15,7 @@ public:
 
     Request* convertReceivedRequest(string request);
 
-    string convertToSendRequest(Response* response);
+    nlohmann::json convertToSendRequest(Response* response);
 };
 
 

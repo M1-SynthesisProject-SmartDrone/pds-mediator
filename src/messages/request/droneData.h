@@ -10,19 +10,31 @@ using namespace std;
 struct DroneDataRegister : Request{
 
     int tr_id;
+    int pointId;
+    int altitude;
     int latitude;
     int longitude;
     int rotation;
+    bool isCheckpoint;
+    float pressure;
+    float temperature;
+    int batteryRemaining;
     time_t date;
     string image;
 
 
-    DroneDataRegister(int tr_id, int latitude, int longitude, int rotation, time_t date, string image){
+    DroneDataRegister(int tr_id, int pointId, int altitude, int latitude, int longitude, int rotation, bool isCheckpoint, float pressure, float temperature, int batteryRemaining, time_t date, string image){
         this->RequestType = MESSAGE_TYPE::REGISTER;
         this->tr_id = tr_id;
+        this->pointId = pointId;
+        this->altitude = altitude;
         this->latitude = latitude;
         this->longitude = longitude;
         this->rotation = rotation;
+        this->isCheckpoint = isCheckpoint;
+        this->pressure = pressure;
+        this->temperature = temperature;
+        this->batteryRemaining = batteryRemaining;
         this->date = date;
         this->image=image;
     }

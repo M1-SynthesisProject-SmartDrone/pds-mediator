@@ -10,6 +10,7 @@
 #include "../messages/request/endTripSaveRequest.h"
 #include "../messages/request/TripLaunchRequest.h"
 #include "../messages/request/TripSaveRequest.h"
+#include "../network/UDPSocket.h"
 
 #include "../messages/messagetype.h"
 #include "../request_executer/RequestExecuter.h"
@@ -21,13 +22,19 @@ class RequestAnalyser {
 
     RequestAnalyser();
 
+    RequestAnalyser(ConfigParams conf, std::shared_ptr<UDPSocket> inputSocket, std::shared_ptr<UDPSocket> outputSocket);
+
     ~RequestAnalyser();
 
     void parseRequest(std::string request);
 
+    bool parseSaveRequest(std::string request, int tr_id, int pointId);
+
     private:
 
-    RequestExecuter executer;
+    ConfigParams config;
+
+    RequestExecuter executer ;
 
     std::unordered_map<std::string, MESSAGE_TYPE> messagesTypeMap {
         {"REQUEST", REQUEST},
@@ -48,9 +55,12 @@ class RequestAnalyser {
 
     Request* getRequestFromDocument(nlohmann::json& document);
 
+    Request* getSaveRequestsFromDocument(nlohmann::json& document, int tr_id, int pointId);
+
+
     DataRequest* parseDataRequest(nlohmann::json& obj);
 
-    DroneDataRegister* parseDroneDataRequest(int tr_id, nlohmann::json& obj);
+    DroneDataRegister* parseDroneDataRequest(int tr_id, int pointId, nlohmann::json& obj);
 
     TripSaveRequest* parseTripSaveRequest(nlohmann::json& obj);
 
