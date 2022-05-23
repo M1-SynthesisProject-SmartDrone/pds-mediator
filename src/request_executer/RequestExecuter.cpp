@@ -103,10 +103,10 @@ void RequestExecuter::executeTripSaveRequest(TripSaveRequest *TripSaveRequest)
 void RequestExecuter::registerImage(int tripId, int positionId, std::string image){
     LOG_F(INFO, "Start saving image ... ");
     auto database = mongodbConnection->getDatabase();
-    bool hasCollection = database.has_collection("trip_"+tripId );
-    auto collection = database.collection("trip_"+tripId);
+    bool hasCollection = database.has_collection("trip_"+to_string(tripId) );
+    auto collection = database["trip_"+to_string(tripId)];
 
-        // ==== Example insertion ====
+    // ==== Example insertion ====
     // Create the document (a json object)
     auto builder = bsoncxx::builder::stream::document{};
     bsoncxx::document::value doc_value = builder
@@ -115,8 +115,8 @@ void RequestExecuter::registerImage(int tripId, int positionId, std::string imag
         << "height" << 480
         << "image" << image
 
-        << bsoncxx::builder::stream::finalize; // builder.build()
-
+    << bsoncxx::builder::stream::finalize; // builder.build()
+    
     // insert it
     collection.insert_one(doc_value.view());
     LOG_F(INFO,"Stop saving image");

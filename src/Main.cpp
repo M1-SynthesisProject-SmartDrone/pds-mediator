@@ -40,7 +40,6 @@ int main(int argc, char* argv[])
     
     auto dataOutput = make_shared<UDPSocket>();
 
-
     auto requestAnalyser = RequestAnalyser(config, dataInput, dataOutput);
     // main thread of the server
     LOG_F(INFO, "-> Starting main thread of the program");
@@ -59,7 +58,7 @@ int main(int argc, char* argv[])
     // auto postgresConnection = make_unique<PostgresqlConnection>(config.postgres);
     // auto mongodbConnection = make_unique<MongodbConnection>(config.mongoDb);
 
-
+    // mongodbExample(make_unique<MongodbConnection>(config.mongoDb));
     LOG_F(INFO, "Starting database server ...");
 
     return 0;
