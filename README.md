@@ -83,11 +83,20 @@ While the server is saving, you have to send this request to save a position & i
     "temperature" : 12.23,        // float
     "pressure" : 1245.12,         // float
     "batteryRemaining" : 73,      // Integer        
-    "isCheckpoint" : True,         // bool, 
+    "isCheckpoint" : True,        // bool, 
     "time" : 164445158451488,     // time, integer
-    "image" : "Image"
+    "image" : 154                 // number of bytes for the image
 }
 ```
+You will receive this answer : 
+```
+{
+    "responseType":"RESP_REGISTER",
+    "isDone":true
+}
+```
+Then you can send the image directly, the server will save it in the mongoDB database.
+
 
 When you want to stop saving the trip, you just have to send this request :
 ```
