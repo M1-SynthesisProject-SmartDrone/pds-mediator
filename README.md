@@ -40,7 +40,7 @@ E: Impossible de corriger les problèmes, des paquets défectueux sont en mode �
 consider install this dependancy before
 
 ```
-sudo apt install libpq5=13.6-0ubuntu0.21.10.1
+sudo apt install libpq5=13.7-0ubuntu0.21.10.1
 
 sudo apt-get install libpq-dev
 ```

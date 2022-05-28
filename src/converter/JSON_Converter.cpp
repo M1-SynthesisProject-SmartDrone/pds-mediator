@@ -30,6 +30,13 @@ nlohmann::json JSON_Converter::convertToSendRequest(Response* response){
             return convertEndTripSaveResponse(endTripSaveResponse);
         }
     break;
+    case MESSAGE_TYPE::RESP_REGISTER:
+        {
+            LOG_F(INFO,"Converting RespRegister request to JSON ...");
+            DataRegisterResponse* dataRegisterResponse = static_cast<DataRegisterResponse*>(response);
+            return convertRespRegister(dataRegisterResponse);
+        }  
+    break;
     default:
         break;
     }
@@ -44,6 +51,13 @@ nlohmann::json JSON_Converter::convertStartTripSaveResponse(StartTripSaveRespons
 }
 
 nlohmann::json JSON_Converter::convertEndTripSaveResponse(EndTripSaveResponse* response){
+    nlohmann::json document;   
+    document["responseType"] = REQUESTTYPES[response->ResponseType] ;
+    document["isDone"] = response->isDone;
+    return document;
+}
+
+nlohmann::json JSON_Converter::convertRespRegister(DataRegisterResponse* response){
     nlohmann::json document;   
     document["responseType"] = REQUESTTYPES[response->ResponseType] ;
     document["isDone"] = response->isDone;

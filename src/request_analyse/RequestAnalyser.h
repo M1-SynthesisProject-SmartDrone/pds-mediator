@@ -10,7 +10,7 @@
 #include "../messages/request/endTripSaveRequest.h"
 #include "../messages/request/TripLaunchRequest.h"
 #include "../messages/request/TripSaveRequest.h"
-#include "../network/UDPSocket.h"
+#include "../network/TCPSocket.h"
 
 #include "../messages/messagetype.h"
 #include "../request_executer/RequestExecuter.h"
@@ -22,13 +22,15 @@ class RequestAnalyser {
 
     RequestAnalyser();
 
-    RequestAnalyser(ConfigParams conf, std::shared_ptr<UDPSocket> inputSocket, std::shared_ptr<UDPSocket> outputSocket);
+    RequestAnalyser(ConfigParams conf, std::shared_ptr<TCPSocket> inputSocket, std::shared_ptr<TCPSocket> outputSocket);
 
     ~RequestAnalyser();
 
     void parseRequest(std::string request);
 
     bool parseSaveRequest(std::string request, int tr_id, int pointId);
+
+    void parseLaunchRequest(std::string request, int tr_historic_id, int pointId);
 
     private:
 
@@ -57,6 +59,7 @@ class RequestAnalyser {
 
     Request* getSaveRequestsFromDocument(nlohmann::json& document, int tr_id, int pointId);
 
+    Request* getLaunchRequestsFromDocument(nlohmann::json& document, int tr_historic_id, int pointId);
 
     DataRequest* parseDataRequest(nlohmann::json& obj);
 

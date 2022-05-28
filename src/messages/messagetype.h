@@ -16,6 +16,7 @@ typedef enum {
     RESP_END_TR_LAUNCH,
     RESP_TR_SAVE,
     RESP_END_TR_SAVE,
+    RESP_REGISTER,
     // GLOBAL
     UNKNOWN
 } MESSAGE_TYPE;
@@ -33,6 +34,7 @@ const std::vector<std::string> REQUESTTYPES {
     "RESP_END_TR_LAUNCH", 
     "RESP_TR_SAVE",
     "RESP_END_TR_SAVE", 
+    "RESP_REGISTER",
     "UNKNOWN"
 };
 

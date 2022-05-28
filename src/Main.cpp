@@ -3,7 +3,7 @@
 #include "config/config_parser.h"
 #include "postgresql/PostgresqlConnection.h"
 #include "mongodb/MongodbConnection.h"
-#include "network/UDPSocket.h"
+#include "network/TCPSocket.h"
 #include <loguru/loguru.hpp>
 #include "request_analyse/RequestAnalyser.h"
 
@@ -31,25 +31,23 @@ int main(int argc, char* argv[])
     loguru::init(argc, argv);
 
     LOG_F(INFO, "Parsing configuration done");
-    LOG_F(INFO, "\tInput IP : %s \tInput port : %d \tOutput port : %d",config.communication.inputip.c_str() ,config.communication.inputreceiveport,config.communication.inputsendport );
-    LOG_F(INFO, "\tOutput IP : %s \tInput port : %d \tOutput port : %d ", config.communication.outputip.c_str() ,config.communication.outputreceiveport,config.communication.outputsendport);
+    LOG_F(INFO, "\tInput port : %d\n",config.communication.inputport);
+    LOG_F(INFO, "\tOutput port : %d\n",config.communication.outputport);
 
     // creating object for UDPCommunication
-    auto dataInput = make_shared<UDPSocket>();
-    dataInput->bindPort(config.communication.inputreceiveport );
+    auto dataInput = make_shared<TCPSocket>();
+    dataInput->waitConnection(config.communication.inputport);
     
-    auto dataOutput = make_shared<UDPSocket>();
+    auto dataOutput = make_shared<TCPSocket>();
+    dataOutput->waitConnection(config.communication.outputport);
 
     auto requestAnalyser = RequestAnalyser(config, dataInput, dataOutput);
     // main thread of the server
     LOG_F(INFO, "-> Starting main thread of the program");
-    while(isRunning){
-        bzero(buffer, 512);
-        
+    while(isRunning){        
         // await for a request from input IP & entry port
         LOG_F(INFO, "Waiting for a request ... ");
-        dataInput->receiveMessage(buffer, 512, sender);
-        //printf("buffer content:%s\n", buffer );
+        auto buffer = dataInput->receiveMessage();
         
         // analyse request & execute appropriate code
         requestAnalyser.parseRequest(buffer);

@@ -1,12 +1,13 @@
 #include "RequestExecuter.h"
 #include "../messages/messagetype.h"
 #include <loguru/loguru.hpp>
-#include "../network/UDPSocket.h"
+#include "../network/TCPSocket.h"
 #include "../request_analyse/RequestAnalyser.h"
+#include "../messages/response/dataRegisterResponse.h"
 
 #include <iostream>
 
-RequestExecuter::RequestExecuter(ConfigParams conf, std::shared_ptr<UDPSocket> inputSocket, std::shared_ptr<UDPSocket> outputSocket) : config(conf)
+RequestExecuter::RequestExecuter(ConfigParams conf, std::shared_ptr<TCPSocket> inputSocket, std::shared_ptr<TCPSocket> outputSocket) : config(conf)
 {
     dataInput = inputSocket;
     dataOutput = outputSocket;
@@ -39,11 +40,13 @@ void RequestExecuter::executeRequest(Request *request)
         DataRequest *dataRequest = static_cast<DataRequest *>(request);
         executeDataRequest(dataRequest);
     }
+    break;
     case MESSAGE_TYPE::REGISTER:
     {
         DroneDataRegister* dronedataRequest = static_cast<DroneDataRegister*>(request);
         registerNewPositionBasicTrip(dronedataRequest->tr_id, dronedataRequest->pointId, dronedataRequest);
     }
+    break;
     case MESSAGE_TYPE::END_TR_SAVE:
     {
         endTripSaveRequest* endTripSaveReq = static_cast<endTripSaveRequest*>(request);
@@ -55,6 +58,16 @@ void RequestExecuter::executeRequest(Request *request)
     }
 }
 
+void RequestExecuter::executeHistoricSave(Request* request, int idLaunch){
+    DroneDataRegister* data = static_cast<DroneDataRegister*>(request);
+    LOG_F(INFO,"Start saving a position as historic trip position for basic trip %d", data->tr_id);
+    auto transaction1 = postgresConnection->createTransaction(); // instance of pqxx::work
+    std::time_t result = std::time(nullptr); // TODO
+    transaction1->exec_prepared(PostgresqlConnection::SAVE_HISTORIC_TRIP_POINT, idLaunch, data->tr_id, data->pointId, data->latitude, data->longitude, data->altitude, data->rotation, std::asctime(std::localtime(&result)), data->isCheckpoint);
+    transaction1->commit();
+}
+
+// TODO 
 void RequestExecuter::executeDataRequest(DataRequest *dataRequest)
 {
 
@@ -67,6 +80,13 @@ void RequestExecuter::executeDroneDataRegister(DroneDataRegister *dronedataRegis
 void RequestExecuter::executeTripLaunchRequest(TripLaunchRequest *tripLaunchRequest)
 {
     LOG_F(INFO, "Launch a registered trip ... ");
+
+    int tripId = getNewHistoricTripId();
+    registerNewHistoricTripEntry(tripId, tripLaunchRequest->tr_id);
+
+    // create the thread & launch it
+    // await for positions and save them OR for end_tr_save
+
 }
 
 void RequestExecuter::executeTripSaveRequest(TripSaveRequest *TripSaveRequest)
@@ -80,7 +100,7 @@ void RequestExecuter::executeTripSaveRequest(TripSaveRequest *TripSaveRequest)
     // alerting user that we are ready to save
     StartTripSaveResponse response = StartTripSaveResponse(true);
     nlohmann::json responseJson = converter.convertToSendRequest(&response);
-    dataInput->sendMessage(config.communication.inputip, config.communication.inputsendport, responseJson.dump().c_str(),strlen(responseJson.dump().c_str()));
+    dataInput->sendMessage(responseJson.dump());
 
     RequestAnalyser analyser(config, dataInput, dataOutput);
     sockaddr_in sender;
@@ -90,11 +110,10 @@ void RequestExecuter::executeTripSaveRequest(TripSaveRequest *TripSaveRequest)
     while(isRunning){
         LOG_F(INFO, "Waiting for a drone data to save or a END_TR8SAVE request ... ");
         
-        dataInput->receiveMessage(buffer, 512, sender);
+        auto buffer = dataInput->receiveMessage();
         isRunning = analyser.parseSaveRequest(buffer, tripId, pointId);
         LOG_F(INFO, "isRunning %d", isRunning);
         pointId+=1;
-        bzero(buffer, 512);
     }
 
     LOG_F(INFO, "End of trip saving");
@@ -126,11 +145,28 @@ void RequestExecuter::registerNewPositionBasicTrip(int tripId, int pointId, Dron
     LOG_F(INFO,"Start saving a position as basic trip position for trip %d", tripId);
     auto transaction1 = postgresConnection->createTransaction(); // instance of pqxx::work
     std::time_t result = std::time(nullptr);
-    transaction1->exec_prepared(PostgresqlConnection::SAVE_BASIC_TRIP_POINT, tripId, pointId, data->latitude, data->longitude, data->altitude, data->rotation,  "collNameTest", data->image, std::asctime(std::localtime(&result)), data->isCheckpoint);
+    transaction1->exec_prepared(PostgresqlConnection::SAVE_BASIC_TRIP_POINT, tripId, pointId, data->latitude, data->longitude, data->altitude, data->rotation, std::asctime(std::localtime(&result)), data->isCheckpoint);
     transaction1->commit();
 
-    // image save
-    registerImage(tripId, pointId, data->image);
+    LOG_F(INFO,"Save pxdata for trip %d", tripId);
+    auto transaction2 = postgresConnection->createTransaction(); // instance of pqxx::work
+    transaction2->exec_prepared(PostgresqlConnection::SAVE_TRIP_PXDATA, tripId, pointId, data->pressure, data->temperature, data->batteryRemaining);
+    transaction2->commit();
+
+    DataRegisterResponse resp = DataRegisterResponse(true);
+    nlohmann::json doc = converter.convertToSendRequest(&resp);
+    dataInput->sendMessage(doc.dump());
+    if(data->isCheckpoint){
+        LOG_F(INFO, "CHECKPOINT DETECTED : Waiting for image to save...");
+        long imagesize = data->image ;
+        auto image = dataInput->receiveBigMessage<unsigned char>(imagesize);
+        string str = str.assign(image.begin(), image.end());
+        LOG_F(INFO,"image : %s", str);
+
+        // image save
+        registerImage(tripId, pointId, str);
+    }
+    
 }
 
 void RequestExecuter::executeEndTripSaveRequest(endTripSaveRequest *endTripSaveRequest)
@@ -138,7 +174,8 @@ void RequestExecuter::executeEndTripSaveRequest(endTripSaveRequest *endTripSaveR
     LOG_F(INFO, "Send to client that the trip is saved");
     EndTripSaveResponse response = EndTripSaveResponse(true);
     nlohmann::json responseJson = converter.convertToSendRequest(&response);
-    dataInput->sendMessage(config.communication.inputip, config.communication.inputsendport,responseJson.dump().c_str(), strlen(responseJson.dump().c_str()) );
+    dataInput->sendMessage(responseJson.dump());
+
 }
 
 int RequestExecuter::getNewTripId()
@@ -158,11 +195,39 @@ int RequestExecuter::getNewTripId()
     return tripNumber;
 }
 
+
+int RequestExecuter::getNewHistoricTripId()
+{
+    auto transaction1 = postgresConnection->createTransaction(); // instance of pqxx::work
+    pqxx::result result(transaction1->exec("SELECT count(*) FROM tr_historic;"));
+    auto row = result[0];
+    int nbtrips;
+    auto opt = row["count"].get<int>();
+    if (opt)
+    {
+        nbtrips = *opt;
+    }
+    LOG_F(INFO, "current number of trip registered : %d", nbtrips);
+    int tripNumber = nbtrips++;
+    transaction1->commit();
+    return tripNumber;
+}
+
 void RequestExecuter::registerNewTripEntry(int tripId)
 {
     LOG_F(INFO,"Saving new trip entry in basic trip List");
     auto transaction1 = postgresConnection->createTransaction(); // instance of pqxx::work
     std::time_t result = std::time(nullptr);
     transaction1->exec_prepared(PostgresqlConnection::SAVE_TRIP_ENTRY, tripId, "undefined Name", std::asctime(std::localtime(&result)) );
+    transaction1->commit();
+}
+
+
+void RequestExecuter::registerNewHistoricTripEntry(int tripId, int basicTripId)
+{
+    LOG_F(INFO,"Saving new trip entry in historic trip List");
+    auto transaction1 = postgresConnection->createTransaction(); // instance of pqxx::work
+    std::time_t result = std::time(nullptr);
+    transaction1->exec_prepared(PostgresqlConnection::SAVE_HISTORIC_TRIP_ENTRY, tripId, basicTripId, "undefined Name", std::asctime(std::localtime(&result)) );
     transaction1->commit();
 }

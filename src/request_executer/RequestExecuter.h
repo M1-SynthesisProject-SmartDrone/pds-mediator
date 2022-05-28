@@ -10,7 +10,7 @@
 #include "../messages/request/TripSaveRequest.h"
 #include "../postgresql/PostgresqlConnection.h"
 #include "../mongodb/MongodbConnection.h"
-#include "../network/UDPSocket.h"
+#include "../network/TCPSocket.h"
 #include "../converter/JSON_Converter.h"
 
 #include "../messages/messagetype.h"
@@ -25,11 +25,16 @@ private:
 
     int getNewTripId();
 
+    int getNewHistoricTripId();
+
     void registerNewTripEntry(int tripId);
+
+    void registerNewHistoricTripEntry(int tripId, int basicTripId);
 
     void sendRespTripSave(bool isLaunched);
 
     void registerNewPositionBasicTrip(int tripId, int pointId, DroneDataRegister* data);
+    
 
     void registerImage(int tripId, int positionId, std::string image);
 
@@ -38,15 +43,17 @@ public:
 
     JSON_Converter converter;
     
-    std::shared_ptr<UDPSocket> dataInput;
+    std::shared_ptr<TCPSocket> dataInput;
 
-    std::shared_ptr<UDPSocket> dataOutput;
+    std::shared_ptr<TCPSocket> dataOutput;
 
-    RequestExecuter(ConfigParams conf, std::shared_ptr<UDPSocket> inputSocket, std::shared_ptr<UDPSocket> outputSocket);
+    RequestExecuter(ConfigParams conf, std::shared_ptr<TCPSocket> inputSocket, std::shared_ptr<TCPSocket> outputSocket);
 
     ~RequestExecuter();
 
     void executeRequest(Request *request);
+
+    void executeHistoricSave(Request* request, int idLaunch);
 
     void executeDataRequest(DataRequest *dataRequest);
 

@@ -20,10 +20,10 @@ struct DroneDataRegister : Request{
     float temperature;
     int batteryRemaining;
     time_t date;
-    string image;
+    ssize_t image;
 
 
-    DroneDataRegister(int tr_id, int pointId, int altitude, int latitude, int longitude, int rotation, bool isCheckpoint, float pressure, float temperature, int batteryRemaining, time_t date, string image){
+    DroneDataRegister(int tr_id, int pointId, int altitude, int latitude, int longitude, int rotation, bool isCheckpoint, float pressure, float temperature, int batteryRemaining, time_t date, int image){
         this->RequestType = MESSAGE_TYPE::REGISTER;
         this->tr_id = tr_id;
         this->pointId = pointId;

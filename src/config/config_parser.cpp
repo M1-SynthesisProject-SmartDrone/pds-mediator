@@ -49,12 +49,9 @@ ConfigParams parseConfig(int argc, char *argv[])
 
     const auto& commSettings = root["ports"];
     const auto communcationConfig = CommunicationpParams{
-        commSettings["inputip"],
-        commSettings["inputreceiveport"],
-        commSettings["inputsendport"],
-        commSettings["outputip"],
-        commSettings["outputreceiveport"],
-        commSettings["outputsendport"],
+        commSettings["inputport"],
+        commSettings["outputport"],
+
 
     };
 

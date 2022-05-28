@@ -21,12 +21,9 @@ struct MongoDbParams
 
 struct CommunicationpParams
 {
-    std::string inputip;
-    int inputreceiveport;
-    int inputsendport;
-    std::string outputip;
-    int outputreceiveport;
-    int outputsendport;
+
+    int inputport;
+    int outputport;
 
 };
 

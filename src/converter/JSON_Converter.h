@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 #include "../messages/response/StartTripSaveResponse.h"
 #include "../messages/response/EndTripSaveResponse.h"
+#include "../messages/response/dataRegisterResponse.h"
 
 
 using namespace std;
@@ -16,6 +17,8 @@ private:
 nlohmann::json convertStartTripSaveResponse(StartTripSaveResponse* response);
 
 nlohmann::json convertEndTripSaveResponse(EndTripSaveResponse* response);
+
+nlohmann::json convertRespRegister(DataRegisterResponse* response);
 
 public:
 
