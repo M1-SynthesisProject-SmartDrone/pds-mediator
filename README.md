@@ -101,7 +101,7 @@ Then you can send the image directly, the server will save it in the mongoDB dat
 When you want to stop saving the trip, you just have to send this request :
 ```
 {
-	"responseType" : "END_TR_SAVE",
+	"requestType" : "END_TR_SAVE",
 	"tripName" : "NOMTRAJET"
 }
 ```
@@ -113,5 +113,74 @@ And you will receive this :
 	"isDone" : boolean // true or false depending if it works or not
 }
 ```
+### Start a trip
 
+to start a trip, you have to send this request to the server : 
+```
+{
+	"requestType" : "TR_LAUNCH",
+	"tr_id" : 1     // INTEGER, the id trip
+}
+```
+ You will receive this response : 
+ ```
+{
+	"responseType": "RESP_TR_LAUNCH",
+	"filesize" : INTEGER // size of the upcoming trip file
+}
+```
 
+Then you can send this : 
+```
+{
+	"requestType" : "WAIT_TR_FILE"
+}
+```
+
+And you will receive this : 
+ ```
+{
+	"responseType": "TR_FILE",
+	"content" : [
+        {
+            "lat" : 000000000,
+            "lon" : 000000000,
+            "height":000000,
+            "rotation":000000
+        },
+        ...
+    ]
+}
+```
+
+Then you can send this : 
+```
+{
+	"requestType" : "RESP_TR_FILE"
+}
+```
+
+And then you can ask for the image according to trip with this : 
+```
+{
+	"requestType" : "NEXTDRONEPOSITION",
+}
+```
+And you will receive this : 
+
+ ```
+{
+	"responseType": "DRONEPOSITION",
+	"id_pos" : INTEGER,
+    "imageSize" : INTEGER
+}
+```
+you will send this : 
+
+```
+{
+	"requestType" : "RESP_DRONEPOSITION",
+}
+```
+
+and then you will receive the image.
