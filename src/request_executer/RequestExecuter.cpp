@@ -103,14 +103,13 @@ void RequestExecuter::executeTripSaveRequest(TripSaveRequest *TripSaveRequest)
     dataInput->sendMessage(responseJson.dump());
 
     RequestAnalyser analyser(config, dataInput, dataOutput);
-    sockaddr_in sender;
-    char* buffer = (char*) malloc(sizeof(char)*512);
     bool isRunning = true;
     int pointId = 0;
     while(isRunning){
         LOG_F(INFO, "Waiting for a drone data to save or a END_TR8SAVE request ... ");
         
         auto buffer = dataInput->receiveMessage();
+        LOG_F(INFO, "buffersize : %d", buffer.size());
         isRunning = analyser.parseSaveRequest(buffer, tripId, pointId);
         LOG_F(INFO, "isRunning %d", isRunning);
         pointId+=1;
@@ -119,12 +118,24 @@ void RequestExecuter::executeTripSaveRequest(TripSaveRequest *TripSaveRequest)
     LOG_F(INFO, "End of trip saving");
 }
 
-void RequestExecuter::registerImage(int tripId, int positionId, std::string image){
+void RequestExecuter::registerImage(int tripId, int positionId, std::vector<uint8_t> image){
     LOG_F(INFO, "Start saving image ... ");
     auto database = mongodbConnection->getDatabase();
-    bool hasCollection = database.has_collection("trip_"+to_string(tripId) );
-    auto collection = database["trip_"+to_string(tripId)];
 
+
+    // bool hasCollection = database.has_collection("trip_"+to_string(tripId) );
+    stringstream ss;
+    ss << "trip_" << tripId;
+    auto collection = database[ss.str()];
+    // auto bulkOp = collection.create_bulk_write();
+    // uint8_t* test = {(uint8_t*)malloc(sizeof(uint8_t)*10);
+    bsoncxx::builder::basic::array arrrayBuilder{};
+
+    bsoncxx::array::view a{image.data(), image.size()};
+    for(auto const& value : image){
+        arrrayBuilder.append(value);
+    }
+    auto array = arrrayBuilder.view();
     // ==== Example insertion ====
     // Create the document (a json object)
     auto builder = bsoncxx::builder::stream::document{};
@@ -132,12 +143,17 @@ void RequestExecuter::registerImage(int tripId, int positionId, std::string imag
         << "id_pos" << positionId
         << "width" << 640
         << "height" << 480
-        << "image" << image
-
+        << "image" << array
     << bsoncxx::builder::stream::finalize; // builder.build()
-    
+        LOG_F(INFO, "TEST");
+
     // insert it
-    collection.insert_one(doc_value.view());
+    auto start = std::chrono::steady_clock::now();
+    mongocxx::options::insert insertOpts;
+    insertOpts.bypass_document_validation(true);
+    collection.insert_one(doc_value.view(), insertOpts);
+    auto end = std::chrono::steady_clock::now();
+    cout << "Time for one insertion : " << std::chrono::duration_cast<chrono::milliseconds>(end- start).count();
     LOG_F(INFO,"Stop saving image");
 }
 
@@ -156,16 +172,20 @@ void RequestExecuter::registerNewPositionBasicTrip(int tripId, int pointId, Dron
     DataRegisterResponse resp = DataRegisterResponse(true);
     nlohmann::json doc = converter.convertToSendRequest(&resp);
     dataInput->sendMessage(doc.dump());
-    if(data->isCheckpoint){
-        LOG_F(INFO, "CHECKPOINT DETECTED : Waiting for image to save...");
-        long imagesize = data->image ;
-        auto image = dataInput->receiveBigMessage<unsigned char>(imagesize);
-        string str = str.assign(image.begin(), image.end());
-        LOG_F(INFO,"image : %s", str);
+    LOG_F(INFO, "CHECKPOINT DETECTED : Waiting for image to save...");
+    long imagesize = data->image ;
+    LOG_F(INFO, "image size : %ld", imagesize);
+    auto image = dataInput->receiveBigMessage<unsigned char>(imagesize);
+    //string str = str.assign(image.begin(), image.end());
+    LOG_F(INFO,"image : %s", image);
 
-        // image save
-        registerImage(tripId, pointId, str);
+    // image save
+    if(image.size() != imagesize){
+        LOG_F(INFO, "received size : %ld --- awaited size : %ld", image.size(), imagesize);
+        //throw runtime_error("size not valid !");
     }
+    registerImage(tripId, pointId, image);
+
     
 }
 

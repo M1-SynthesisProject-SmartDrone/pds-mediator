@@ -10,6 +10,7 @@ typedef enum {
     TR_SAVE,
     END_TR_SAVE,
     REGISTER,
+    NEXTDRONEPOSITION,
     // TO SEND MESSAGE TYPES
     RESP_REQUEST,
     RESP_TR_LAUNCH,
@@ -29,6 +30,7 @@ const std::vector<std::string> REQUESTTYPES {
     "TR_SAVE", 
     "END_TR_SAVE", 
     "REGISTER",
+    "NEXTDRONEPOSITION",
     "RESP_REQUEST",
     "RESP_TR_LAUNCH", 
     "RESP_END_TR_LAUNCH", 

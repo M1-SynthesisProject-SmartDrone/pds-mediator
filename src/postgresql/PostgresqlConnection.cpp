@@ -13,6 +13,7 @@ void PostgresqlConnection::prepareStatements()
     m_connection->prepare(SAVE_HISTORIC_TRIP_ENTRY, "INSERT INTO tr_historic(idLaunch, idTrajet, name, launchingDate) VALUES ($1, $2, $3, $4)");    //etc.
     m_connection->prepare(SAVE_BASIC_TRIP_POINT, "INSERT INTO tr_basic_points(idTrajet, idPoint, latitude, longitude, height, rotation, registerDate, isCheckpoint) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)");    //etc.
     m_connection->prepare(SAVE_HISTORIC_TRIP_POINT, "INSERT INTO tr_historic_points(idLaunch, idTrajet, idPoint, latitude, longitude, height, rotation, registerDate, isCheckpoint) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)");    //etc.
+    // m_connection->prepare(GET_CHECKPOINT_BASICTRIP, "SELECT latitude, longitude, rotation, height, FROM tr_basic_points WHERE idTrajet = $1 AND isCheckpoint = true");    //no prepared imho TODO
 
 }
 

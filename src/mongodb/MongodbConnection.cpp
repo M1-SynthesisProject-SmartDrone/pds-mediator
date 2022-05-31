@@ -19,7 +19,12 @@ MongodbConnection::MongodbConnection(MongoDbParams params) :
 MongodbConnection::~MongodbConnection()
 {}
 
+
+
 mongocxx::v_noabi::database MongodbConnection::getDatabase()
 {
     return m_client->database(m_databaseName);
+    
 }
+
+

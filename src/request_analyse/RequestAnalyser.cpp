@@ -53,6 +53,14 @@ void RequestAnalyser::parseRequest(string request)
     
 }
 
+bool RequestAnalyser::parsePositionRequest(string request){
+    LOG_F(INFO, "Request received during launch operation");
+    nlohmann::json document = getJSONFromRequest(request);
+
+    return document["requestType"] == "NEXTDRONEPOSITION";
+    
+}
+
 bool RequestAnalyser::parseSaveRequest(std::string request, int tr_id, int pointId){
     LOG_F(INFO, "-> Request received during a save operation");
     nlohmann::json document = getJSONFromRequest(request);
@@ -84,6 +92,7 @@ void RequestAnalyser::parseLaunchRequest(std::string request, int tr_historic_id
 
 nlohmann::json RequestAnalyser::getJSONFromRequest(string request){
     LOG_F(INFO,"Parsing received request");
+    LOG_F(INFO, "json :%s", request.c_str());
     nlohmann::json json = nlohmann::json::parse(request);
     if (!json["requestType"].is_string())
     {

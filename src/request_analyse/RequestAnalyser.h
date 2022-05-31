@@ -32,6 +32,8 @@ class RequestAnalyser {
 
     void parseLaunchRequest(std::string request, int tr_historic_id, int pointId);
 
+    bool parsePositionRequest(string request);
+
     private:
 
     ConfigParams config;
@@ -44,12 +46,14 @@ class RequestAnalyser {
         {"END_TR_LAUNCH", END_TR_LAUNCH},
         {"TR_SAVE", TR_SAVE},
         {"END_TR_SAVE", END_TR_SAVE},
+        {"NEXTDRONEPOSITION", NEXTDRONEPOSITION},
         {"REGISTER", REGISTER},
         {"RESP_REQUEST", RESP_REQUEST},
         {"RESP_TR_LAUNCH", RESP_TR_LAUNCH},
         {"RESP_END_TR_LAUNCH", RESP_END_TR_LAUNCH},
         {"RESP_TR_SAVE", RESP_TR_SAVE},
         {"RESP_END_TR_SAVE", RESP_END_TR_SAVE},
+        {"RESP_REGISTER", RESP_REGISTER},
         {"UNKNOWN", UNKNOWN}
     };
 

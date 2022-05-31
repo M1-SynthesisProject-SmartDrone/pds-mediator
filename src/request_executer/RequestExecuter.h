@@ -12,8 +12,8 @@
 #include "../mongodb/MongodbConnection.h"
 #include "../network/TCPSocket.h"
 #include "../converter/JSON_Converter.h"
-
 #include "../messages/messagetype.h"
+#include <fstream>
 
 class RequestExecuter
 {
@@ -36,7 +36,7 @@ private:
     void registerNewPositionBasicTrip(int tripId, int pointId, DroneDataRegister* data);
     
 
-    void registerImage(int tripId, int positionId, std::string image);
+    void registerImage(int tripId, int positionId, std::vector<uint8_t> image);
 
 public:
     ConfigParams config;

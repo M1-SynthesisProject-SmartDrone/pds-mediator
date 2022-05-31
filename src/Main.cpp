@@ -44,13 +44,19 @@ int main(int argc, char* argv[])
     auto requestAnalyser = RequestAnalyser(config, dataInput, dataOutput);
     // main thread of the server
     LOG_F(INFO, "-> Starting main thread of the program");
-    while(isRunning){        
+    while(isRunning){    
+        try{
+            LOG_F(INFO, "Waiting for a request ... ");
+            auto buffer = dataInput->receiveMessage();
+            
+            // analyse request & execute appropriate code
+            requestAnalyser.parseRequest(buffer);
+        }    
+        catch(exception& ex){
+            LOG_F(ERROR,"Error while treating a request : %s", ex.what());
+        }
         // await for a request from input IP & entry port
-        LOG_F(INFO, "Waiting for a request ... ");
-        auto buffer = dataInput->receiveMessage();
         
-        // analyse request & execute appropriate code
-        requestAnalyser.parseRequest(buffer);
     }
 
     // auto postgresConnection = make_unique<PostgresqlConnection>(config.postgres);
