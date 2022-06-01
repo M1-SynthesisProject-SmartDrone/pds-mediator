@@ -135,7 +135,6 @@ You can then send this on port 7001 (and all following send & response on port 7
 ```
 {
 	"requestType" : "REQ_TRIP_POINTS",
-	"tr_id" : 1     // INTEGER, the id trip
 }
 ```
 
