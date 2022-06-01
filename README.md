@@ -115,17 +115,34 @@ And you will receive this :
 ```
 ### Start a trip
 
-to start a trip, you have to send this request to the server : 
+to start a trip, you have to send this request to the server to port 7000 : 
 ```
 {
 	"requestType" : "TR_LAUNCH",
 	"tr_id" : 1     // INTEGER, the id trip
 }
 ```
- You will receive this response : 
+you will then receive this on port 7000 : 
+
  ```
 {
 	"responseType": "RESP_TR_LAUNCH",
+	"isDone" : bool // size of the upcoming trip file
+}
+```
+You can then send this on port 7001 (and all following send & response on port 7001):
+
+```
+{
+	"requestType" : "REQ_TRIP_POINTS",
+	"tr_id" : 1     // INTEGER, the id trip
+}
+```
+
+You will receive this response : 
+ ```
+{
+	"responseType": "RESP_REQ_TRIP_POINTS",
 	"filesize" : INTEGER // size of the upcoming trip file
 }
 ```
