@@ -5,8 +5,13 @@
 #include "../messagetype.h"
 
 struct nextDronePosition : Request {
-    nextDronePosition(){
+    int id_pos;
+    int filesize;
+
+    nextDronePosition(int id_pos, int filesize){
         this->RequestType = MESSAGE_TYPE::NEXTDRONEPOSITION;
+        this->filesize = filesize;
+        this->id_pos = id_pos;
     }
 };
 

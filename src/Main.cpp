@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
 //     // ==== Example iteration (stream-based approach) ====
 //     // ! Warning : not tested, but should work
 //     auto transaction4 = postgresConnection->createTransaction();
-//     pqxx::stream_from stream = pqxx::stream_from::query(*(transaction3.get()), "SELECT * FROM test;");
+//     pqxx::stream_from stream = pqxx::stream_from::query(*(transaction4.get()), "SELECT * FROM test;");
 //     // The tuple should have the same form as we want to retrieve
 //     std::tuple<std::string, std::string> row;
 //     while (stream >> row)

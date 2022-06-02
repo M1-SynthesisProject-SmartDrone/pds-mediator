@@ -11,6 +11,11 @@ typedef enum {
     END_TR_SAVE,
     REGISTER,
     NEXTDRONEPOSITION,
+    REQ_TR_POINTS,
+    GET_PATH_LIST,
+    GET_ONE_PATH,
+    TR_FILE,
+    WAIT_TR_FILE,  
     // TO SEND MESSAGE TYPES
     RESP_REQUEST,
     RESP_TR_LAUNCH,
@@ -18,6 +23,11 @@ typedef enum {
     RESP_TR_SAVE,
     RESP_END_TR_SAVE,
     RESP_REGISTER,
+    RESP_REQ_TRIP_POINTS,
+    RESP_PATH_LIST,
+    RESP_ONE_PATH,
+    RESP_TR_FILE,
+    RESP_DRONEPOSITION,
     // GLOBAL
     UNKNOWN
 } MESSAGE_TYPE;
@@ -31,12 +41,22 @@ const std::vector<std::string> REQUESTTYPES {
     "END_TR_SAVE", 
     "REGISTER",
     "NEXTDRONEPOSITION",
+    "REQ_TR_POINTS",
+    "GET_PATH_LIST",
+    "GET_ONE_PATH",
+    "TR_FILE",
+    "WAIT_TR_FILE",  
     "RESP_REQUEST",
     "RESP_TR_LAUNCH", 
     "RESP_END_TR_LAUNCH", 
     "RESP_TR_SAVE",
     "RESP_END_TR_SAVE", 
     "RESP_REGISTER",
+    "RESP_REQ_TRIP_POINTS",
+    "RESP_PATH_LIST",
+    "RESP_ONE_PATH",
+    "RESP_TR_FILE",
+    "RESP_DRONEPOSITION",
     "UNKNOWN"
 };
 

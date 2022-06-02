@@ -130,11 +130,14 @@ you will then receive this on port 7000 :
 	"isDone" : bool // size of the upcoming trip file
 }
 ```
+
+#### Automatic Pilot
+
 You can then send this on port 7001 (and all following send & response on port 7001):
 
 ```
 {
-	"requestType" : "REQ_TRIP_POINTS",
+	"requestType" : "REQ_TR_POINTS",
 }
 ```
 
@@ -200,3 +203,97 @@ you will send this :
 ```
 
 and then you will receive the image.
+
+
+#### Data storage during flights
+
+After the REP_TR_LAUNCH, you can just send REGISTER request like this: 
+```
+{
+    "requestType" : "REGISTER", 
+    "altitude" : 123,             // integer
+    "latitude" : 1234564,         // latitude, integer
+    "longitude" : 1234561,        // longitude, integer
+    "rotation" : 21,              // rotation, integer
+    "temperature" : 12.23,        // float
+    "pressure" : 1245.12,         // float
+    "batteryRemaining" : 73,      // Integer        
+    "isCheckpoint" : True,        // bool, 
+    "time" : 164445158451488,     // time, integer
+    "image" : 154                 // number of bytes for the image
+}
+```
+You will receive this answer : 
+```
+{
+    "responseType":"RESP_REGISTER",
+    "isDone":true
+}
+
+```
+
+If the central server want to notify an error to the mediator, just have to send this :
+```
+{
+	"requestType" : "TR_ERROR",
+}
+```
+
+And to notify the end of error you have to send this : 
+```
+{
+	"requestType" : "END_TR_ERROR",
+}
+```
+For both cases you will receive this answer to say the mediator received the notification: 
+```
+{
+    "responseType":"ERROR_NOTIFICATION_RECEIVED"
+}
+
+```
+
+
+## Ask for specific datas
+
+-> Get path list
+```
+{
+	requestType : "GET_PATH_LIST"
+}
+```
+```
+{
+	responseType : "RESP_PATH_LIST",
+		content : [
+		{
+			"name" : "TEST",
+			"id" : INTEGER,
+			"date" : DATE
+		},
+		...
+	]
+}
+```
+-> Get data for one specific path
+```
+{
+	requestType : "GET_ONE_PATH",
+	tr_id : INTEGER
+}
+```
+
+```
+{
+	responseType : "RESP_ONE_PATH",
+	"name" : "TEST",
+	"id" : INTEGER,
+	"nbPoints" : INTEGER,
+	"nbCheckpoints" : INTEGER,
+	"date" : integer (timestamp),
+	"latitude" : INTEGER,
+	"longitude" : INTEGER,
+	"altitude" : INTEGER
+}
+
+```
