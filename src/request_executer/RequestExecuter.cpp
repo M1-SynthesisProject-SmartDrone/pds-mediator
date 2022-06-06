@@ -9,6 +9,7 @@
 #include "../messages/response/respErrorNotif.h"
 #include "../messages/request/getOnePath.h"
 #include "../messages/request/getPathList.h"
+#include "postgresql/PostgresqlConnection.h"
 
 #include <iostream>
 
@@ -75,7 +76,30 @@ void RequestExecuter::executeRequest(Request *request)
 
 void RequestExecuter::executeGetPathList(getPathList *pathListRequest)
 {
-    
+    // get from database
+    std::string sqlreq = "SELECT * FROM tr_basic";
+    auto transaction = postgresConnection->createTransaction();
+    auto stream =  pqxx::stream_from::query(*(transaction.get()), sqlreq);
+    // convert to JSON & send 
+    nlohmann::json message = {
+        {"responseType", REQUESTTYPES[MESSAGE_TYPE::GET_PATH_LIST]}};
+    std::tuple<int, std::string, int > row;
+    nlohmann::json result = nlohmann::json::array();
+    while (stream >> row)
+    {
+        // create document
+        nlohmann::json j = {
+            {"id", std::get<0>(row)},
+            {"name", std::get<1>(row)},
+            {"date", std::get<2>(row)}
+        };
+        result.push_back(j);
+    }
+    message["content"] = result;
+
+    // send that message is ready
+    dataInput->sendMessage(message.dump());
+
 }
 
 void RequestExecuter::executeGetOnePath(getOnePath *onePathRequest)

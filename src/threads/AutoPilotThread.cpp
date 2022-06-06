@@ -116,7 +116,7 @@ void AutoPilotThread::sendAllTrip(pqxx::stream_from &stream)
 {
     // create json message
     nlohmann::json message = {
-        {"requestType", REQUESTTYPES[MESSAGE_TYPE::TR_FILE]}};
+        {"responseType", REQUESTTYPES[MESSAGE_TYPE::TR_FILE]}};
     std::tuple<int, int, int, int> row;
     nlohmann::json result = nlohmann::json::array();
     while (stream >> row)
