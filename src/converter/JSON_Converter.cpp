@@ -37,11 +37,38 @@ nlohmann::json JSON_Converter::convertToSendRequest(Response* response){
             return convertRespRegister(dataRegisterResponse);
         }  
     break;
+    case MESSAGE_TYPE::RESP_TR_LAUNCH:
+        {
+            LOG_F(INFO,"Converting TripLaunchResponse request to JSON ...");
+            TripLaunchResponse* tripLaunchResponse = static_cast<TripLaunchResponse*>(response);
+            return convertRespTripLaunch(tripLaunchResponse);
+        }  
+    break;
+    case MESSAGE_TYPE::ERROR_NOTIFICATION_RECEIVED :
+        {
+            LOG_F(INFO,"Converting TripLaunchResponse request to JSON ...");
+            TripLaunchResponse* tripLaunchResponse = static_cast<TripLaunchResponse*>(response);
+            return convertRespTripLaunch(tripLaunchResponse);
+        }  
+    break;
     default:
         break;
     }
 }
 
+nlohmann::json JSON_Converter::convertRespTripLaunch(respErrorNotif* response){
+    nlohmann::json document;
+    document["responseType"] = REQUESTTYPES[response->ResponseType];
+    return document;
+}
+
+
+nlohmann::json JSON_Converter::convertRespTripLaunch(TripLaunchResponse* response){
+    nlohmann::json document;   
+    document["responseType"] = REQUESTTYPES[response->ResponseType];
+    document["isDone"] = response->isDone;
+    return document;
+}
 
 nlohmann::json JSON_Converter::convertStartTripSaveResponse(StartTripSaveResponse* response){
     nlohmann::json document;   

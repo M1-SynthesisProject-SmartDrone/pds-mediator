@@ -4,7 +4,7 @@
 #include "../messages/response/RespReqTrippoints.h"
 #include <bsoncxx/builder/stream/document.hpp>
 
-AutoPilotThread::AutoPilotThread(ConfigParams conf, std::shared_ptr<TCPSocket> inputSocket, std::shared_ptr<TCPSocket> outputSocket, int tr_id) : config(conf), Abstract_ThreadClass(1000, 200)
+AutoPilotThread::AutoPilotThread(ConfigParams conf, std::shared_ptr<TCPSocket> outputSocket, int tr_id) : config(conf), Abstract_ThreadClass(1000, 200)
 {
     postgresConnection = make_unique<PostgresqlConnection>(config.postgres);
     mongodbConnection = make_unique<MongodbConnection>(config.mongoDb);

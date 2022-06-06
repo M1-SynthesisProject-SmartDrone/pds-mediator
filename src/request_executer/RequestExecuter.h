@@ -14,6 +14,8 @@
 #include "../converter/JSON_Converter.h"
 #include "../messages/messagetype.h"
 #include <fstream>
+#include "../messages/response/tripLaunchResponse.h"
+
 
 class RequestExecuter
 {
@@ -33,10 +35,10 @@ private:
 
     void sendRespTripSave(bool isLaunched);
 
-    void registerNewPositionBasicTrip(int tripId, int pointId, DroneDataRegister* data);
+    void registerNewPositionTrip(int tripId, int pointId, DroneDataRegister* data, bool isHistoric = false, int idLaunch = -1);
     
 
-    void registerImage(int tripId, int positionId, std::vector<uint8_t> image);
+    void registerImage(int tripId, int positionId, std::vector<uint8_t> image, int idLaunch = -1);
 
 public:
     ConfigParams config;
@@ -64,6 +66,10 @@ public:
     void executeTripSaveRequest(TripSaveRequest *TripSaveRequest);
 
     void executeEndTripSaveRequest(endTripSaveRequest *endTripSaveRequest);
+
+    void executeGetPathList(getPathList* pathListRequest);
+
+    void executeGetOnePath(getOnePath* onePathRequest); 
 };
 
 #endif // __REQUESTEXECUTER_H__

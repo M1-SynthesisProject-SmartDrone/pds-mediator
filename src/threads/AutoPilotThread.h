@@ -41,7 +41,7 @@ class AutoPilotThread : public Abstract_ThreadClass {
 
     unique_ptr<MongodbConnection> mongodbConnection;
 
-    AutoPilotThread(ConfigParams conf, std::shared_ptr<TCPSocket> inputSocket, std::shared_ptr<TCPSocket> outputSocket,  int tr_id);
+    AutoPilotThread(ConfigParams conf, std::shared_ptr<TCPSocket> outputSocket,  int tr_id);
 
     ~AutoPilotThread();
 

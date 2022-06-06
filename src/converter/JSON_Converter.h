@@ -6,6 +6,9 @@
 #include "../messages/response/StartTripSaveResponse.h"
 #include "../messages/response/EndTripSaveResponse.h"
 #include "../messages/response/dataRegisterResponse.h"
+#include "../messages/response/tripLaunchResponse.h"
+#include "../messages/response/respErrorNotif.h"
+
 
 
 using namespace std;
@@ -19,6 +22,11 @@ nlohmann::json convertStartTripSaveResponse(StartTripSaveResponse* response);
 nlohmann::json convertEndTripSaveResponse(EndTripSaveResponse* response);
 
 nlohmann::json convertRespRegister(DataRegisterResponse* response);
+
+nlohmann::json convertRespTripLaunch(TripLaunchResponse* response);
+
+nlohmann::json convertRespTripLaunch(respErrorNotif* response);
+
 
 public:
 

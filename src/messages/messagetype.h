@@ -16,6 +16,8 @@ typedef enum {
     GET_ONE_PATH,
     TR_FILE,
     WAIT_TR_FILE,  
+    TR_ERROR,
+    END_TR_ERROR,
     // TO SEND MESSAGE TYPES
     RESP_REQUEST,
     RESP_TR_LAUNCH,
@@ -28,6 +30,7 @@ typedef enum {
     RESP_ONE_PATH,
     RESP_TR_FILE,
     RESP_DRONEPOSITION,
+    ERROR_NOTIFICATION_RECEIVED,
     // GLOBAL
     UNKNOWN
 } MESSAGE_TYPE;
@@ -46,6 +49,8 @@ const std::vector<std::string> REQUESTTYPES {
     "GET_ONE_PATH",
     "TR_FILE",
     "WAIT_TR_FILE",  
+    "TR_ERROR",
+    "END_TR_ERROR",
     "RESP_REQUEST",
     "RESP_TR_LAUNCH", 
     "RESP_END_TR_LAUNCH", 
@@ -57,6 +62,7 @@ const std::vector<std::string> REQUESTTYPES {
     "RESP_ONE_PATH",
     "RESP_TR_FILE",
     "RESP_DRONEPOSITION",
+    "ERROR_NOTIFICATION_RECEIVED",
     "UNKNOWN"
 };
 
