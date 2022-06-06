@@ -15,6 +15,7 @@ struct onePathResponse : Response {
     int altitude;
 
     onePathResponse(std::string name, int id, int nbPoints, int nbCheckpoints, int date, int latitude, int longitude, int altitude){
+        this->ResponseType = MESSAGE_TYPE::RESP_ONE_PATH;
         this->name = name;
         this->nbPoints = nbPoints;
         this->nbCheckpoints = nbCheckpoints;

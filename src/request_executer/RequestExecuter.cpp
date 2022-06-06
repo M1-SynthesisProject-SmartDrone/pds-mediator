@@ -10,6 +10,7 @@
 #include "../messages/request/getOnePath.h"
 #include "../messages/request/getPathList.h"
 #include "postgresql/PostgresqlConnection.h"
+#include "../messages/response/onePathResponse.h"
 
 #include <iostream>
 
@@ -79,11 +80,11 @@ void RequestExecuter::executeGetPathList(getPathList *pathListRequest)
     // get from database
     std::string sqlreq = "SELECT * FROM tr_basic";
     auto transaction = postgresConnection->createTransaction();
-    auto stream =  pqxx::stream_from::query(*(transaction.get()), sqlreq);
-    // convert to JSON & send 
+    auto stream = pqxx::stream_from::query(*(transaction.get()), sqlreq);
+    // convert to JSON & send
     nlohmann::json message = {
         {"responseType", REQUESTTYPES[MESSAGE_TYPE::GET_PATH_LIST]}};
-    std::tuple<int, std::string, int > row;
+    std::tuple<int, std::string, int> row;
     nlohmann::json result = nlohmann::json::array();
     while (stream >> row)
     {
@@ -91,21 +92,41 @@ void RequestExecuter::executeGetPathList(getPathList *pathListRequest)
         nlohmann::json j = {
             {"id", std::get<0>(row)},
             {"name", std::get<1>(row)},
-            {"date", std::get<2>(row)}
-        };
+            {"date", std::get<2>(row)}};
         result.push_back(j);
     }
     message["content"] = result;
 
     // send that message is ready
     dataInput->sendMessage(message.dump());
-
 }
 
 void RequestExecuter::executeGetOnePath(getOnePath *onePathRequest)
 {
+    stringstream req;
+    req << "SELECT * from tr_basic WHERE tr_id = " << onePathRequest->tr_id;
+    auto transaction = postgresConnection->createTransaction();
+    auto streamTrId = pqxx::stream_from::query(*(transaction.get()), req.str());
+    std::tuple<int, std::string, int> rowTrId;
+    streamTrId >> rowTrId;
 
+    auto transaction2 = postgresConnection->createTransaction();
+    stringstream req2;
+    req2 << "SELECT latitude, longitude, height from tr_basic_points where idtrajet = " << onePathRequest->tr_id << " AND idpoint = 0";
+    auto streamPoints = pqxx::stream_from::query(*(transaction2.get()), req2.str());
+    std::tuple<int, int, int> rowpoints;
+    streamPoints >> rowpoints;
 
+    auto transaction3 = postgresConnection->createTransaction();
+    stringstream req3;
+    req3 << "SELECT count(idpoint) as countidpoint, count(ischeckpoint) as countcheckpoint WHERE idtrajet = " << onePathRequest->tr_id;
+    auto streamcount = pqxx::stream_from::query(*(transaction3.get()), req3.str());
+    std::tuple<int, int> rowcount;
+    streamcount >> rowcount;
+
+    auto onepathreq = onePathResponse(std::get<1>(rowTrId), onePathRequest->tr_id ,std::get<0>(rowcount), std::get<1>(rowcount), std::get<2>(rowTrId), std::get<0>(rowpoints),std::get<1>(rowpoints),std::get<2>(rowpoints) );
+    auto jsonreq = converter.convertToSendRequest(&onepathreq);
+    dataInput->sendMessage(jsonreq);
 }
 
 void RequestExecuter::executeHistoricSave(Request *request, int idLaunch)

@@ -8,6 +8,7 @@
 #include "../messages/response/dataRegisterResponse.h"
 #include "../messages/response/tripLaunchResponse.h"
 #include "../messages/response/respErrorNotif.h"
+#include "../messages/response/onePathResponse.h"
 
 
 
@@ -26,6 +27,8 @@ nlohmann::json convertRespRegister(DataRegisterResponse* response);
 nlohmann::json convertRespTripLaunch(TripLaunchResponse* response);
 
 nlohmann::json convertRespTripLaunch(respErrorNotif* response);
+
+nlohmann::json convertOnePathResponse(onePathResponse* response);
 
 
 public:

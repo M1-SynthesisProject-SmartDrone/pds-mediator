@@ -50,6 +50,12 @@ nlohmann::json JSON_Converter::convertToSendRequest(Response* response){
             TripLaunchResponse* tripLaunchResponse = static_cast<TripLaunchResponse*>(response);
             return convertRespTripLaunch(tripLaunchResponse);
         }  
+     case MESSAGE_TYPE::RESP_ONE_PATH :
+        {
+            LOG_F(INFO,"Converting respOnePath request to JSON ...");
+            onePathResponse* onepathresp = static_cast<onePathResponse*>(response);
+            return convertOnePathResponse(onepathresp);
+        }  
     break;
     default:
         break;
@@ -59,6 +65,21 @@ nlohmann::json JSON_Converter::convertToSendRequest(Response* response){
 nlohmann::json JSON_Converter::convertRespTripLaunch(respErrorNotif* response){
     nlohmann::json document;
     document["responseType"] = REQUESTTYPES[response->ResponseType];
+    return document;
+}
+
+nlohmann::json JSON_Converter::convertOnePathResponse(onePathResponse* response){
+    nlohmann::json document;
+    document["responseType"] = REQUESTTYPES[response->ResponseType];
+    document["name"] = response->name;
+    document["id"] = response->id;
+    document["nbPoints"] = response->nbPoints;
+    document["nbCheckpoints"] = response->nbCheckpoints;
+    document["date"] = response->date;
+    document["latitude"] = response->latitude;
+    document["longitude"] = response->longitude;
+    document["altitude"] = response->altitude;
+
     return document;
 }
 
