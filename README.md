@@ -28,6 +28,11 @@ $ cmake ..
 $ make
 ```
 
+if the mongodb server isnt started : 
+```
+sudo service mongod start
+```
+
 ## Help if error while trying to install libpq-dev
 
 if you have the following error while trying to install libpq-dev :
@@ -191,7 +196,7 @@ And you will receive this :
 {
 	"responseType": "DRONEPOSITION",
 	"id_pos" : INTEGER,
-    "imageSize" : INTEGER
+    "imagesize" : INTEGER
 }
 ```
 you will send this : 
@@ -288,7 +293,7 @@ For both cases you will receive this answer to say the mediator received the not
 	responseType : "RESP_ONE_PATH",
 	"name" : "TEST",
 	"id" : INTEGER,
-	"nbPoints" : INTEGER,
+	"" : INTEGER,
 	"nbCheckpoints" : INTEGER,
 	"date" : integer (timestamp),
 	"latitude" : INTEGER,

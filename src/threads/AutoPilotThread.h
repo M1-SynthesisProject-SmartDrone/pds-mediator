@@ -9,7 +9,7 @@
 #include "postgresql/PostgresqlConnection.h"
 #include "../config/config_parser.h"
 #include "../messages/response/RespReqTrippoints.h"
-
+#include "../messages/response/dronePosition.h"
 
 
 
@@ -21,10 +21,11 @@ class AutoPilotThread : public Abstract_ThreadClass {
 
     nlohmann::json getJSONFromRequest(string request);
 
-    void sendAllTrip(pqxx::stream_from& stream);
+    void sendAllTrip(int tr_id);
 
     nlohmann::json convertRespReqTripPoints(respTripPoints* response);
     
+    nlohmann::json convertDronePosResponse(dronePosition* response);
 
     public:
 

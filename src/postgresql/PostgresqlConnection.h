@@ -30,6 +30,7 @@ public:
     inline static const std::string SAVE_HISTORIC_TRIP_ENTRY = "save_historic_trip_entry";
     inline static const std::string SAVE_HISTORIC_TRIP_POINT = "save_historic_trip_point";
     inline static const std::string SAVE_TRIP_PXDATA = "save_trip_pxdata";
+    inline static const std::string SAVE_HISTORIC_TRIP_PXDATA = "save_historic_trip_pxdata";
     inline static const std::string GET_CHECKPOINT_BASICTRIP = "get_checkpoint_basictrip";
     inline static const std::string SAVE_ERROR_DATA = "save_error_data";
     inline static const std::string GET_ONE_PATH = "get_one_path";

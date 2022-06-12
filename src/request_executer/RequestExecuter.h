@@ -8,6 +8,8 @@
 #include "../messages/request/endTripSaveRequest.h"
 #include "../messages/request/TripLaunchRequest.h"
 #include "../messages/request/TripSaveRequest.h"
+#include "../messages/request/getPathList.h"
+#include "../messages/request/getOnePath.h"
 #include "../postgresql/PostgresqlConnection.h"
 #include "../mongodb/MongodbConnection.h"
 #include "../network/TCPSocket.h"

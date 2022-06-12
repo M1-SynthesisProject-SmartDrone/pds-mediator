@@ -50,17 +50,34 @@ nlohmann::json JSON_Converter::convertToSendRequest(Response* response){
             TripLaunchResponse* tripLaunchResponse = static_cast<TripLaunchResponse*>(response);
             return convertRespTripLaunch(tripLaunchResponse);
         }  
-     case MESSAGE_TYPE::RESP_ONE_PATH :
+    break;
+    case MESSAGE_TYPE::RESP_ONE_PATH :
         {
             LOG_F(INFO,"Converting respOnePath request to JSON ...");
             onePathResponse* onepathresp = static_cast<onePathResponse*>(response);
             return convertOnePathResponse(onepathresp);
         }  
     break;
+    case MESSAGE_TYPE::DRONEPOSITION :
+        {
+            LOG_F(INFO,"Converting DRONEPOSITION request to JSON ...");
+            dronePosition* dronepos = static_cast<dronePosition*>(response);
+            return convertDronePosResponse(dronepos);
+        }  
+    break;
     default:
         break;
     }
 }
+
+nlohmann::json JSON_Converter::convertDronePosResponse(dronePosition* response){
+    nlohmann::json document;
+    document["responseType"] = REQUESTTYPES[response->ResponseType];
+    document["id_pos"] =response->id_pos;
+    document["imagesize"] =response->imagesize;
+    return document;
+}
+
 
 nlohmann::json JSON_Converter::convertRespTripLaunch(respErrorNotif* response){
     nlohmann::json document;
@@ -75,11 +92,10 @@ nlohmann::json JSON_Converter::convertOnePathResponse(onePathResponse* response)
     document["id"] = response->id;
     document["nbPoints"] = response->nbPoints;
     document["nbCheckpoints"] = response->nbCheckpoints;
-    document["date"] = response->date;
+    document["date"] = response->date.c_str();
     document["latitude"] = response->latitude;
     document["longitude"] = response->longitude;
     document["altitude"] = response->altitude;
-
     return document;
 }
 

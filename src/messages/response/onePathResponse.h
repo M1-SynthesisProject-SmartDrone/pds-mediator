@@ -9,12 +9,12 @@ struct onePathResponse : Response {
     int id;
     int nbPoints;
     int nbCheckpoints;
-    int date;
+    std::string date;
     int latitude;
     int longitude;
     int altitude;
 
-    onePathResponse(std::string name, int id, int nbPoints, int nbCheckpoints, int date, int latitude, int longitude, int altitude){
+    onePathResponse(std::string name, int id, int nbPoints, int nbCheckpoints, std::string date, int latitude, int longitude, int altitude){
         this->ResponseType = MESSAGE_TYPE::RESP_ONE_PATH;
         this->name = name;
         this->nbPoints = nbPoints;

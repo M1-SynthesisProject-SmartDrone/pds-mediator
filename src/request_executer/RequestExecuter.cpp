@@ -63,11 +63,13 @@ void RequestExecuter::executeRequest(Request *request)
     case MESSAGE_TYPE::GET_PATH_LIST:
     {
         getPathList *pathListRequest = static_cast<getPathList *>(request);
+        executeGetPathList(pathListRequest);
     }
     break;
     case MESSAGE_TYPE::GET_ONE_PATH:
     {
         getOnePath *onePathRequest = static_cast<getOnePath *>(request);
+        executeGetOnePath(onePathRequest);
     }
     break;
     default:
@@ -83,8 +85,8 @@ void RequestExecuter::executeGetPathList(getPathList *pathListRequest)
     auto stream = pqxx::stream_from::query(*(transaction.get()), sqlreq);
     // convert to JSON & send
     nlohmann::json message = {
-        {"responseType", REQUESTTYPES[MESSAGE_TYPE::GET_PATH_LIST]}};
-    std::tuple<int, std::string, int> row;
+        {"responseType", REQUESTTYPES[MESSAGE_TYPE::RESP_PATH_LIST]}};
+    std::tuple<int, std::string, std::string> row;
     nlohmann::json result = nlohmann::json::array();
     while (stream >> row)
     {
@@ -104,11 +106,17 @@ void RequestExecuter::executeGetPathList(getPathList *pathListRequest)
 void RequestExecuter::executeGetOnePath(getOnePath *onePathRequest)
 {
     stringstream req;
-    req << "SELECT * from tr_basic WHERE tr_id = " << onePathRequest->tr_id;
+    req << "SELECT * from tr_basic WHERE idtrajet = " << onePathRequest->tr_id;
     auto transaction = postgresConnection->createTransaction();
     auto streamTrId = pqxx::stream_from::query(*(transaction.get()), req.str());
-    std::tuple<int, std::string, int> rowTrId;
+    std::tuple<int, std::string, std::string> rowTrId;
     streamTrId >> rowTrId;
+    int id = std::get<0>(rowTrId);
+    string name = std::get<1>(rowTrId);
+    string date = std::get<2>(rowTrId);
+    streamTrId.complete();
+    transaction->commit();
+    LOG_F(INFO, "transaction 1 done ");
 
     auto transaction2 = postgresConnection->createTransaction();
     stringstream req2;
@@ -116,17 +124,28 @@ void RequestExecuter::executeGetOnePath(getOnePath *onePathRequest)
     auto streamPoints = pqxx::stream_from::query(*(transaction2.get()), req2.str());
     std::tuple<int, int, int> rowpoints;
     streamPoints >> rowpoints;
+    int latitude = std::get<0>(rowpoints);
+    int longitude = std::get<1>(rowpoints);
+    int height = std::get<2>(rowpoints);
+    streamPoints.complete();
+    transaction2->commit();
+    LOG_F(INFO, "transaction 2 done ");
 
     auto transaction3 = postgresConnection->createTransaction();
     stringstream req3;
-    req3 << "SELECT count(idpoint) as countidpoint, count(ischeckpoint) as countcheckpoint WHERE idtrajet = " << onePathRequest->tr_id;
+    req3 << "SELECT count(idpoint) as countidpoint, count(ischeckpoint) as countcheckpoint FROM tr_basic_points WHERE idtrajet = " << onePathRequest->tr_id;
     auto streamcount = pqxx::stream_from::query(*(transaction3.get()), req3.str());
     std::tuple<int, int> rowcount;
     streamcount >> rowcount;
+    int nbPoints = std::get<0>(rowcount);
+    int nbCheckpoints = std::get<1>(rowcount);
+    streamcount.complete();
+    transaction3->commit();
+    LOG_F(INFO, "transaction 3 done ");
 
-    auto onepathreq = onePathResponse(std::get<1>(rowTrId), onePathRequest->tr_id ,std::get<0>(rowcount), std::get<1>(rowcount), std::get<2>(rowTrId), std::get<0>(rowpoints),std::get<1>(rowpoints),std::get<2>(rowpoints) );
+    auto onepathreq = onePathResponse(name, id, nbPoints, nbCheckpoints, date, latitude, longitude, height);
     auto jsonreq = converter.convertToSendRequest(&onepathreq);
-    dataInput->sendMessage(jsonreq);
+    dataInput->sendMessage(jsonreq.dump());
 }
 
 void RequestExecuter::executeHistoricSave(Request *request, int idLaunch)
@@ -167,14 +186,19 @@ void RequestExecuter::executeTripLaunchRequest(TripLaunchRequest *tripLaunchRequ
     bool isError = false;
     int nbRegisterDuringError = 0;
     int pointId = 0;
-
-    while (thread->isRunFlag())
+    bool continueloop = true;
+    while (continueloop)
     {
+        LOG_F(INFO, "start new loop");
+        if (!thread->isRunFlag())
+        {
+            LOG_F(INFO, "END OF LOOP");
+            continueloop = false;
+        }
         auto message = dataInput->receiveMessage();
         auto jsonmessage = analyser.getJSONFromRequest(message);
         string reqType = jsonmessage["requestType"];
         MESSAGE_TYPE messageType = analyser.messagesTypeMap[reqType];
-        auto transaction = postgresConnection->createTransaction(); // instance of pqxx::work
         switch (messageType)
         {
         case MESSAGE_TYPE::REGISTER:
@@ -195,31 +219,31 @@ void RequestExecuter::executeTripLaunchRequest(TripLaunchRequest *tripLaunchRequ
             // envoi RESP
             auto resp = respErrorNotif();
             auto jsonresp = converter.convertToSendRequest(&resp);
-            dataInput->sendMessage(jsonresp);
+            dataInput->sendMessage(jsonresp.dump());
             nbRegisterDuringError = 0;
         }
         break;
         case MESSAGE_TYPE::END_TR_ERROR:
         {
-            isError = false;
             // save de la fin de l'erreur /!\ utiliser nb register pour savoir si on a pris la main ou pas
             bool action = false;
             int startingpoint;
             int endingpoint = pointId;
-            if (nbRegisterDuringError > 0)
+            if (startingpoint != endingpoint)
             {
-                isError = true;
+                action = true,
                 startingpoint = endingpoint - nbRegisterDuringError;
             }
 
             std::time_t nowtime = std::time(nullptr);
+            auto transaction = postgresConnection->createTransaction(); // instance of pqxx::work
             transaction->exec_prepared(PostgresqlConnection::SAVE_ERROR_DATA, idLaunch, tripLaunchRequest->tr_id, startingpoint, action, std::asctime(std::localtime(&nowtime)), startingpoint, endingpoint);
             transaction->commit();
 
             auto resp = respErrorNotif();
             auto jsonresp = converter.convertToSendRequest(&resp);
-            dataInput->sendMessage(jsonresp);
-
+            dataInput->sendMessage(jsonresp.dump());
+            LOG_F(INFO, "isRunFlag : %d", thread->isRunFlag());
             // envoi RESP
         }
         break;
@@ -228,7 +252,7 @@ void RequestExecuter::executeTripLaunchRequest(TripLaunchRequest *tripLaunchRequ
             break;
         }
     }
-
+    LOG_F(INFO, "join threads ");
     thread->join();
 }
 
@@ -322,13 +346,13 @@ void RequestExecuter::registerNewPositionTrip(int tripId, int pointId, DroneData
 
     LOG_F(INFO, "Save pxdata for trip %d", tripId);
     auto transaction2 = postgresConnection->createTransaction(); // instance of pqxx::work
-    transaction2->exec_prepared(PostgresqlConnection::SAVE_TRIP_PXDATA, tripId, pointId, data->pressure, data->temperature, data->batteryRemaining);
+    transaction2->exec_prepared(PostgresqlConnection::SAVE_HISTORIC_TRIP_PXDATA, idLaunch, tripId, pointId, data->pressure, data->temperature, data->batteryRemaining);
     transaction2->commit();
 
     DataRegisterResponse resp = DataRegisterResponse(true);
     nlohmann::json doc = converter.convertToSendRequest(&resp);
     dataInput->sendMessage(doc.dump());
-    LOG_F(INFO, "CHECKPOINT DETECTED : Waiting for image to save...");
+    LOG_F(INFO, "Waiting for image to save...");
     long imagesize = data->image;
     LOG_F(INFO, "image size : %ld", imagesize);
     auto image = dataInput->receiveBigMessage<unsigned char>(imagesize);
@@ -341,7 +365,8 @@ void RequestExecuter::registerNewPositionTrip(int tripId, int pointId, DroneData
         LOG_F(INFO, "received size : %ld --- awaited size : %ld", image.size(), imagesize);
         // throw runtime_error("size not valid !");
     }
-    registerImage(tripId, pointId, image);
+    registerImage(tripId, pointId, image, idLaunch);
+    LOG_F(INFO, "end of register method");
 }
 
 void RequestExecuter::executeEndTripSaveRequest(endTripSaveRequest *endTripSaveRequest)

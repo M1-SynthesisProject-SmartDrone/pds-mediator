@@ -9,6 +9,7 @@
 #include "../messages/response/tripLaunchResponse.h"
 #include "../messages/response/respErrorNotif.h"
 #include "../messages/response/onePathResponse.h"
+#include "../messages/response/dronePosition.h"
 
 
 
@@ -30,6 +31,7 @@ nlohmann::json convertRespTripLaunch(respErrorNotif* response);
 
 nlohmann::json convertOnePathResponse(onePathResponse* response);
 
+nlohmann::json convertDronePosResponse(dronePosition* response);
 
 public:
 
