@@ -10,6 +10,7 @@
 #include "../messages/response/respErrorNotif.h"
 #include "../messages/response/onePathResponse.h"
 #include "../messages/response/dronePosition.h"
+#include "../messages/response/respEndTripLaunch.h"
 
 
 
@@ -18,6 +19,7 @@ using namespace std;
 class JSON_Converter : Abstract_Converter {
 
 private:
+nlohmann::json convertRespEndTripLaunch(respEndTripLaunch* response);
 
 nlohmann::json convertStartTripSaveResponse(StartTripSaveResponse* response);
 

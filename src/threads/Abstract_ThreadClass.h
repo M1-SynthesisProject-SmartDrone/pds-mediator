@@ -17,19 +17,20 @@
 #include <memory>
 #include <algorithm>
 
-/**
- * A thread have multiple state during is life
- *  TO_INIT -> Not initialised thread
- *  INIT -> Thread in initialisation
- *  READY -> Thread ready to be start
- *  RUN -> Thread which work
- *  STOP -> Thread stopped
- *  QUIT -> Thread in quit process
- *  PROBLEM -> Blocked thread in reason of a problem
- *  DEADLINE_EXCEEDED -> thread
- *
- */
-enum LifeCoreState {
+ /**
+  * A thread have multiple state during is life
+  *  TO_INIT -> Not initialised thread
+  *  INIT -> Thread in initialisation
+  *  READY -> Thread ready to be start
+  *  RUN -> Thread which work
+  *  STOP -> Thread stopped
+  *  QUIT -> Thread in quit process
+  *  PROBLEM -> Blocked thread in reason of a problem
+  *  DEADLINE_EXCEEDED -> thread
+  *
+  */
+enum LifeCoreState
+{
     TO_INIT,
     INIT,
     READY,
@@ -44,10 +45,16 @@ enum LifeCoreState {
  * Abstract class which convey to implement a thread brick
  * Use a real time context
  */
-class Abstract_ThreadClass {
-    
+class Abstract_ThreadClass
+{
 
-public :
+
+public:
+    /**
+     * The name of the thread
+     */
+    std::string id;
+
     // REAL TIME VAR
     /**
      * timeval that save the begin of the running method
@@ -65,10 +72,16 @@ public :
     struct timeval end_checkpoint;
 
     /**
+     * Used to check the current elapsed time of the loop and calculate the
+     * time that we have to waot for the next loop
+     */
+    long lastLoopTime = 0;
+
+    /**
      * Represent the period between all task in ms
      */
     int task_period = 1000;
-    
+
     /**
      * Var use to define when a task is overcome is execution delay
      */
@@ -93,16 +106,15 @@ public :
     /**
      * Var use to share the state of the system
      */
-    LifeCoreState currentState=LifeCoreState::TO_INIT;;
-
-
+    LifeCoreState currentState = LifeCoreState::TO_INIT;
 
     /**
      * Default constructor : take in parameters the task period time and the task deadline time
+     * @param id the name of the thread (useful when logging for example)
      * @param task_period period between all task execution
      * @param task_deadline alert limit use to send an alert message when the task are too long (see the notion of real time context)
      */
-    Abstract_ThreadClass(int task_period, int task_deadline);
+    Abstract_ThreadClass(std::string id, int task_period, int task_deadline);
 
     /**
      * Default destructor
@@ -153,6 +165,24 @@ public :
      * Overwrite it to create your real time thread
      */
     virtual void run() = 0;
+
+    /**
+     * Must be called by each implementation at the start of the "run" method (before the loop).
+     * This permits to setup the thread before starting the loop.
+     */
+    void initRun();
+
+    /**
+     * Must be called by each implementation at the start of the main run loop.
+     * This method handles timers and thread status.
+     */
+    void onStartLoop();
+    
+    /**
+     * Must be called by each implementation at the end of the main run loop.
+     * This method handles timers and thread status.
+     */
+    void onEndLoop();
 
     // GETTER AND SETTERS
 

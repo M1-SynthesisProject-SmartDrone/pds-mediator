@@ -65,6 +65,13 @@ nlohmann::json JSON_Converter::convertToSendRequest(Response* response){
             return convertDronePosResponse(dronepos);
         }  
     break;
+    case MESSAGE_TYPE::RESP_END_TR_LAUNCH :
+        {
+            LOG_F(INFO,"Converting RESP_END_TR_LAUNCH request to JSON ...");
+            respEndTripLaunch* respEndTrLaunch = static_cast<respEndTripLaunch*>(response);
+            return convertRespEndTripLaunch(respEndTrLaunch);
+        }  
+    break;
     default:
         break;
     }
@@ -75,6 +82,12 @@ nlohmann::json JSON_Converter::convertDronePosResponse(dronePosition* response){
     document["responseType"] = REQUESTTYPES[response->ResponseType];
     document["id_pos"] =response->id_pos;
     document["imagesize"] =response->imagesize;
+    return document;
+}
+
+nlohmann::json JSON_Converter::convertRespEndTripLaunch(respEndTripLaunch* response){
+    nlohmann::json document;
+    document["responseType"] = REQUESTTYPES[response->ResponseType];
     return document;
 }
 

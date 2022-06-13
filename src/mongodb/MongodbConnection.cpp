@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <loguru/loguru.hpp>
 
 using namespace std;
 
@@ -17,7 +18,9 @@ MongodbConnection::MongodbConnection(MongoDbParams params) :
 }
 
 MongodbConnection::~MongodbConnection()
-{}
+{
+    LOG_F(INFO, "Close mongodb connexion");
+}
 
 
 

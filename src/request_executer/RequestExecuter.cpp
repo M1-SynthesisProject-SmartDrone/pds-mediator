@@ -40,6 +40,7 @@ void RequestExecuter::executeRequest(Request *request)
     {
         TripLaunchRequest *tripLaunchRequest = static_cast<TripLaunchRequest *>(request);
         executeTripLaunchRequest(tripLaunchRequest);
+        LOG_F(INFO, "------------> TRLAUNCH FINISHED");
     }
     break;
     case MESSAGE_TYPE::REQUEST:
@@ -189,12 +190,12 @@ void RequestExecuter::executeTripLaunchRequest(TripLaunchRequest *tripLaunchRequ
     bool continueloop = true;
     while (continueloop)
     {
-        LOG_F(INFO, "start new loop");
-        if (!thread->isRunFlag())
-        {
-            LOG_F(INFO, "END OF LOOP");
-            continueloop = false;
-        }
+        // LOG_F(INFO, "start new loop");
+        // if (!thread->isRunFlag())
+        // {
+        //     LOG_F(INFO, "END OF LOOP");
+        //     continueloop = false;
+        // }
         auto message = dataInput->receiveMessage();
         auto jsonmessage = analyser.getJSONFromRequest(message);
         string reqType = jsonmessage["requestType"];
@@ -247,13 +248,25 @@ void RequestExecuter::executeTripLaunchRequest(TripLaunchRequest *tripLaunchRequ
             // envoi RESP
         }
         break;
+        case MESSAGE_TYPE::END_TR_LAUNCH:
+        {
+            LOG_F(INFO, "End of TR_LAUNCH");
+
+            continueloop = false;
+            respEndTripLaunch respEndTR = respEndTripLaunch();
+            auto jsonrespEndTRLainch = converter.convertToSendRequest(&respEndTR);
+            dataInput->sendMessage(jsonrespEndTRLainch.dump());
+            LOG_F(INFO, "---RESP_END_TR_LAUNCH sent !");
+
+        }
+        break;
 
         default:
             break;
         }
     }
-    LOG_F(INFO, "join threads ");
-    thread->join();
+    LOG_F(INFO, "Wait for thead to stop");
+    thread->stop();
 }
 
 void RequestExecuter::executeTripSaveRequest(TripSaveRequest *TripSaveRequest)

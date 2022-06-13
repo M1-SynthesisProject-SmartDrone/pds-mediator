@@ -1,6 +1,7 @@
 #include "PostgresqlConnection.h"
 
 #include <sstream>
+#include <loguru/loguru.hpp>
 
 using namespace std;
 
@@ -39,6 +40,7 @@ PostgresqlConnection::PostgresqlConnection(PostgresParams params)
 
 PostgresqlConnection::~PostgresqlConnection()
 {
+    LOG_F(INFO, "Close PostgreSql connexion");
     delete m_connection;
 }
 

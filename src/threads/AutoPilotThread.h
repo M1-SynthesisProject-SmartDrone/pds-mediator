@@ -17,7 +17,6 @@ class AutoPilotThread : public Abstract_ThreadClass {
 
     private:
 
-    pqxx::stream_from getPointsFromPG(int tr_id);
 
     nlohmann::json getJSONFromRequest(string request);
 
@@ -34,13 +33,16 @@ class AutoPilotThread : public Abstract_ThreadClass {
 
     int tripid;
 
+    pqxx::stream_from getPointsFromPG(int tr_id);
+
+
     ConfigParams config;
     
     std::shared_ptr<TCPSocket> dataOutput;
 
-    unique_ptr<PostgresqlConnection> postgresConnection;
+    std::unique_ptr<PostgresqlConnection> postgresConnection;
 
-    unique_ptr<MongodbConnection> mongodbConnection;
+    std::unique_ptr<MongodbConnection> mongodbConnection;
 
     AutoPilotThread(ConfigParams conf, std::shared_ptr<TCPSocket> outputSocket,  int tr_id);
 

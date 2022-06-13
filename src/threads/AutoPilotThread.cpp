@@ -5,7 +5,7 @@
 #include <bsoncxx/builder/stream/document.hpp>
 #include "../messages/response/dronePosition.h"
 
-AutoPilotThread::AutoPilotThread(ConfigParams conf, std::shared_ptr<TCPSocket> outputSocket, int tr_id) : config(conf), Abstract_ThreadClass(1000, 200)
+AutoPilotThread::AutoPilotThread(ConfigParams conf, std::shared_ptr<TCPSocket> outputSocket, int tr_id) : Abstract_ThreadClass("DroneSender",1000, 200), config(conf)
 {
     postgresConnection = make_unique<PostgresqlConnection>(config.postgres);
     mongodbConnection = make_unique<MongodbConnection>(config.mongoDb);
@@ -30,7 +30,7 @@ pqxx::stream_from AutoPilotThread::getPointsFromPG(int tr_id)
 
 void AutoPilotThread::run()
 {
-    loguru::set_thread_name("Position Sender");
+    initRun();
     // get all checkpoints
     LOG_F(INFO, "Start waiting for position request");
     std::string reqpointsmessage;
@@ -117,6 +117,8 @@ void AutoPilotThread::run()
             LOG_F(ERROR, e.what());
         }
     }
+    transaction4->commit();
+    nbCheckpointsStream.complete();
     LOG_F(INFO,"----- END OF SECONDARY THREAD");
 }
 
@@ -210,3 +212,5 @@ nlohmann::json AutoPilotThread::convertRespReqTripPoints(respTripPoints *respons
     document["fileSize"] = response->fileSize;
     return document;
 }
+
+

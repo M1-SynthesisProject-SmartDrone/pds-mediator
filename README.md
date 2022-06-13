@@ -257,9 +257,27 @@ For both cases you will receive this answer to say the mediator received the not
 }
 
 ```
+### End of automatic flights
 
+When you will have finished to get all images from the secondary thread, you can send this to the main port:
+
+```
+{
+	"requestType" : "END_TR_LAUNCH",
+}
+```
+
+and you will receive : 
+```
+{
+	"responseType" : "RESP_END_TR_LAUNCH",
+}
+```
+
+and oyu will receive
 
 ## Ask for specific datas
+
 
 -> Get path list
 ```
