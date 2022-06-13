@@ -74,6 +74,7 @@ void RequestExecuter::executeRequest(Request *request)
     }
     break;
     default:
+        LOG_F(ERROR,"REQUEST NOT IDENTIFIED");
         break;
     }
 }
@@ -359,7 +360,13 @@ void RequestExecuter::registerNewPositionTrip(int tripId, int pointId, DroneData
 
     LOG_F(INFO, "Save pxdata for trip %d", tripId);
     auto transaction2 = postgresConnection->createTransaction(); // instance of pqxx::work
-    transaction2->exec_prepared(PostgresqlConnection::SAVE_HISTORIC_TRIP_PXDATA, idLaunch, tripId, pointId, data->pressure, data->temperature, data->batteryRemaining);
+    if(isHistoric){
+        transaction2->exec_prepared(PostgresqlConnection::SAVE_HISTORIC_TRIP_PXDATA, idLaunch, tripId, pointId, data->pressure, data->temperature, data->batteryRemaining);
+    }
+    else {
+        transaction2->exec_prepared(PostgresqlConnection::SAVE_TRIP_PXDATA, tripId, pointId, data->pressure, data->temperature, data->batteryRemaining);
+
+    }
     transaction2->commit();
 
     DataRegisterResponse resp = DataRegisterResponse(true);

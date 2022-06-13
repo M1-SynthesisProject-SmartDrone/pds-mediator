@@ -1,5 +1,6 @@
 #include <iostream>
-
+#include <unistd.h>
+#include <signal.h>
 #include "config/config_parser.h"
 #include "postgresql/PostgresqlConnection.h"
 #include "mongodb/MongodbConnection.h"
@@ -12,51 +13,55 @@ using namespace std;
 void libpqxxExample(unique_ptr<PostgresqlConnection> postgresConnection);
 void mongodbExample(unique_ptr<MongodbConnection> mongodbConnection);
 
-int main(int argc, char* argv[])
-{
+void initSignalHandler();
+void signalHandler(int number);
 
+int main(int argc, char *argv[])
+{
+    initSignalHandler();
 
     LOG_F(INFO, "Starting database server");
     LOG_F(INFO, "Parsing configuration ...");
     const ConfigParams config = parseConfig(argc, argv);
 
     // ----- VARIABLES -----
-    
-    bool isRunning = true;
-    char* buffer = (char *)malloc(sizeof(char)*512);
-    sockaddr_in sender;
 
+    bool isRunning = true;
+    char *buffer = (char *)malloc(sizeof(char) * 512);
+    sockaddr_in sender;
 
     // initialise logger
     loguru::init(argc, argv);
 
     LOG_F(INFO, "Parsing configuration done");
-    LOG_F(INFO, "\tInput port : %d\n",config.communication.inputport);
-    LOG_F(INFO, "\tOutput port : %d\n",config.communication.outputport);
+    LOG_F(INFO, "\tInput port : %d\n", config.communication.inputport);
+    LOG_F(INFO, "\tOutput port : %d\n", config.communication.outputport);
 
     // creating object for UDPCommunication
     auto dataInput = make_shared<TCPSocket>();
     dataInput->waitConnection(config.communication.inputport);
-    
+
     auto dataOutput = make_shared<TCPSocket>();
     dataOutput->waitConnection(config.communication.outputport);
 
     auto requestAnalyser = RequestAnalyser(config, dataInput, dataOutput);
     // main thread of the server
     LOG_F(INFO, "-> Starting main thread of the program");
-    while(isRunning){    
-        try{
+    while (isRunning)
+    {
+        try
+        {
             LOG_F(INFO, "Waiting for a request ... ");
             auto buffer = dataInput->receiveMessage();
-            
+
             // analyse request & execute appropriate code
             requestAnalyser.parseRequest(buffer);
-        }    
-        catch(exception& ex){
-            LOG_F(ERROR,"Error while treating a request : %s", ex.what());
+        }
+        catch (exception &ex)
+        {
+            LOG_F(ERROR, "Error while treating a request : %s", ex.what());
         }
         // await for a request from input IP & entry port
-        
     }
 
     // auto postgresConnection = make_unique<PostgresqlConnection>(config.postgres);
@@ -66,6 +71,42 @@ int main(int argc, char* argv[])
     LOG_F(INFO, "Starting database server ...");
 
     return 0;
+}
+
+void initSignalHandler()
+{
+    LOG_F(INFO, "Init signal handler");
+    signal(SIGINT, signalHandler);
+    signal(SIGQUIT, signalHandler);
+    signal(SIGTERM, signalHandler);
+    signal(SIGFPE, signalHandler);
+}
+
+void signalHandler(int number)
+{
+    int exitStatus = 0;
+    switch (number)
+    {
+    case SIGINT:
+        LOG_F(WARNING, "SIGINT caught");
+        exit(0);
+        break;
+    case SIGQUIT:
+        LOG_F(WARNING, "SIGQUIT caught");
+        exit(0);
+        break;
+    case SIGTERM:
+        LOG_F(WARNING, "SIGTERM caught");
+        exit(1);
+        break;
+    case SIGFPE:
+        LOG_F(WARNING, "SIGFPE caught");
+        exit(2);
+        break;
+    default:
+        LOG_F(WARNING, "Unhandled signal caught : %d", number);
+        break;
+    }
 }
 
 // Examples are not tested, just proof of concepts
@@ -136,27 +177,32 @@ void mongodbExample(unique_ptr<MongodbConnection> mongodbConnection)
     // Create the document (a json object)
     auto builder = bsoncxx::builder::stream::document{};
     bsoncxx::document::value doc_value = builder
-        << "name" << "billy"
-        << "num" << "0102030405"
-        
-        << "int_array" << bsoncxx::builder::stream::open_array // start json array
-            << 1 << 2 << 3
-        << bsoncxx::builder::stream::close_array // end json array
+                                         << "name"
+                                         << "billy"
+                                         << "num"
+                                         << "0102030405"
 
-        << "object" << bsoncxx::builder::stream::open_document // start json object
-            << "attr1" << "gilbert"
-            << "attr2" << "savané"
-        << bsoncxx::builder::stream::close_document // end json object
+                                         << "int_array" << bsoncxx::builder::stream::open_array // start json array
+                                         << 1 << 2 << 3
+                                         << bsoncxx::builder::stream::close_array // end json array
 
-        << bsoncxx::builder::stream::finalize; // builder.build()
+                                         << "object" << bsoncxx::builder::stream::open_document // start json object
+                                         << "attr1"
+                                         << "gilbert"
+                                         << "attr2"
+                                         << "savané"
+                                         << bsoncxx::builder::stream::close_document // end json object
+
+                                         << bsoncxx::builder::stream::finalize; // builder.build()
 
     // insert it
     collection.insert_one(doc_value.view());
 
     // ==== Example search ====
-    auto filter = bsoncxx::builder::stream::document{} 
-        << "name" << "billy"
-        << bsoncxx::builder::stream::finalize;
+    auto filter = bsoncxx::builder::stream::document{}
+                  << "name"
+                  << "billy"
+                  << bsoncxx::builder::stream::finalize;
     auto optionalDocument = collection.find_one(filter.view());
     if (optionalDocument)
     {
