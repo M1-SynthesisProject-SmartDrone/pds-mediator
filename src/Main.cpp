@@ -7,6 +7,8 @@
 #include "network/TCPSocket.h"
 #include <loguru/loguru.hpp>
 #include "request_analyse/RequestAnalyser.h"
+#include "threads/bridges/ImageSaver_MessageHolder.h"
+#include "threads/ImageSaver_ThreadClass.h"
 
 using namespace std;
 
@@ -44,7 +46,13 @@ int main(int argc, char *argv[])
     auto dataOutput = make_shared<TCPSocket>();
     dataOutput->waitConnection(config.communication.outputport);
 
-    auto requestAnalyser = RequestAnalyser(config, dataInput, dataOutput);
+    auto imageToSaveHolder = make_shared<ImageSaver_MessageHolder>();
+
+    ImageSaver_ThreadClass imageSaverThread(config.mongoDb, imageToSaveHolder);
+    imageSaverThread.start();
+
+    auto requestAnalyser = RequestAnalyser(config, dataInput, dataOutput, imageToSaveHolder);
+
     // main thread of the server
     LOG_F(INFO, "-> Starting main thread of the program");
     while (isRunning)
@@ -64,13 +72,7 @@ int main(int argc, char *argv[])
         // await for a request from input IP & entry port
     }
 
-    // auto postgresConnection = make_unique<PostgresqlConnection>(config.postgres);
-    // auto mongodbConnection = make_unique<MongodbConnection>(config.mongoDb);
-
-    // mongodbExample(make_unique<MongodbConnection>(config.mongoDb));
-    LOG_F(INFO, "Starting database server ...");
-
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 void initSignalHandler()

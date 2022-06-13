@@ -25,7 +25,12 @@
 using namespace std;
 using namespace nlohmann;
 
-RequestAnalyser::RequestAnalyser(ConfigParams conf, std::shared_ptr<TCPSocket> inputSocket, std::shared_ptr<TCPSocket> outputSocket) : config(conf), executer(conf, inputSocket, outputSocket)
+RequestAnalyser::RequestAnalyser(ConfigParams conf, 
+    std::shared_ptr<TCPSocket> inputSocket, 
+    std::shared_ptr<TCPSocket> outputSocket,
+    std::shared_ptr<ImageSaver_MessageHolder> imageToSaveHolder
+) : config(conf), 
+    executer(conf, inputSocket, outputSocket, imageToSaveHolder)
 {
 }
 

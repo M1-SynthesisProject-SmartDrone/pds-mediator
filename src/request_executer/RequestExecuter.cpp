@@ -14,10 +14,14 @@
 
 #include <iostream>
 
-RequestExecuter::RequestExecuter(ConfigParams conf, std::shared_ptr<TCPSocket> inputSocket, std::shared_ptr<TCPSocket> outputSocket) : config(conf)
+RequestExecuter::RequestExecuter(ConfigParams conf, 
+    std::shared_ptr<TCPSocket> inputSocket, 
+    std::shared_ptr<TCPSocket> outputSocket,
+    std::shared_ptr<ImageSaver_MessageHolder> imageSaverHolder) : config(conf)
 {
     dataInput = inputSocket;
     dataOutput = outputSocket;
+    this->imageSaverHolder = imageSaverHolder;
     postgresConnection = make_unique<PostgresqlConnection>(config.postgres);
     mongodbConnection = make_unique<MongodbConnection>(config.mongoDb);
 }
@@ -179,7 +183,7 @@ void RequestExecuter::executeTripLaunchRequest(TripLaunchRequest *tripLaunchRequ
     auto launchresp = TripLaunchResponse(true);
     auto strlaunchresp = converter.convertToSendRequest(&launchresp);
     dataInput->sendMessage(strlaunchresp.dump());
-    RequestAnalyser analyser(config, dataInput, dataOutput);
+    RequestAnalyser analyser(config, dataInput, dataOutput, imageSaverHolder);
 
     // create the thread & launch it
     auto thread = make_unique<AutoPilotThread>(config, dataOutput, tripLaunchRequest->tr_id);
@@ -252,7 +256,7 @@ void RequestExecuter::executeTripLaunchRequest(TripLaunchRequest *tripLaunchRequ
         case MESSAGE_TYPE::END_TR_LAUNCH:
         {
             LOG_F(INFO, "End of TR_LAUNCH");
-
+            imageSaverHolder->flush();
             continueloop = false;
             respEndTripLaunch respEndTR = respEndTripLaunch();
             auto jsonrespEndTRLainch = converter.convertToSendRequest(&respEndTR);
@@ -283,7 +287,7 @@ void RequestExecuter::executeTripSaveRequest(TripSaveRequest *TripSaveRequest)
     nlohmann::json responseJson = converter.convertToSendRequest(&response);
     dataInput->sendMessage(responseJson.dump());
 
-    RequestAnalyser analyser(config, dataInput, dataOutput);
+    RequestAnalyser analyser(config, dataInput, dataOutput, imageSaverHolder);
     bool isRunning = true;
     int pointId = 0;
     while (isRunning)
@@ -291,7 +295,7 @@ void RequestExecuter::executeTripSaveRequest(TripSaveRequest *TripSaveRequest)
         LOG_F(INFO, "Waiting for a drone data to save or a END_TR_SAVE request ... ");
 
         auto buffer = dataInput->receiveMessage();
-        LOG_F(INFO, "buffersize : %d", buffer.size());
+        LOG_F(INFO, "buffersize : %ld", buffer.size());
         isRunning = analyser.parseSaveRequest(buffer, tripId, pointId);
         LOG_F(INFO, "isRunning %d", isRunning);
         pointId += 1;
@@ -302,45 +306,17 @@ void RequestExecuter::executeTripSaveRequest(TripSaveRequest *TripSaveRequest)
 
 void RequestExecuter::registerImage(int tripId, int positionId, std::vector<uint8_t> image, int idLaunch)
 {
-    LOG_F(INFO, "Start saving image ... ");
-    auto database = mongodbConnection->getDatabase();
-
-    // bool hasCollection = database.has_collection("trip_"+to_string(tripId) );
+    LOG_F(INFO, "Send image to saver thread");
     stringstream ss;
     ss << "trip_" << tripId;
     if (idLaunch != -1)
     {
         ss << "_idLaunch_" << idLaunch;
     }
-    auto collection = database[ss.str()];
-    // auto bulkOp = collection.create_bulk_write();
-    // uint8_t* test = {(uint8_t*)malloc(sizeof(uint8_t)*10);
-    bsoncxx::builder::basic::array arrrayBuilder{};
-
-    bsoncxx::array::view a{image.data(), image.size()};
-    for (auto const &value : image)
-    {
-        arrrayBuilder.append(value);
-    }
-    auto array = arrrayBuilder.view();
-    // ==== Example insertion ====
-    // Create the document (a json object)
-    auto builder = bsoncxx::builder::stream::document{};
-    bsoncxx::document::value doc_value = builder
-                                         << "id_pos" << positionId
-                                         << "width" << 640
-                                         << "height" << 480
-                                         << "image" << array
-                                         << bsoncxx::builder::stream::finalize; // builder.build()
-
-    // insert it
-    auto start = std::chrono::steady_clock::now();
-    mongocxx::options::insert insertOpts;
-    insertOpts.bypass_document_validation(true);
-    collection.insert_one(doc_value.view(), insertOpts);
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "Time for one insertion : " << std::chrono::duration_cast<chrono::milliseconds>(end - start).count();
-    LOG_F(INFO, "Stop saving image");
+    auto collectionId = ss.str();
+     // This normally does not must change during recording
+    imageSaverHolder->currentCollectionId = collectionId;
+    imageSaverHolder->add(make_unique<ImageToSave>(collectionId, positionId, image));
 }
 
 void RequestExecuter::registerNewPositionTrip(int tripId, int pointId, DroneDataRegister *data, bool isHistoric, int idLaunch)
@@ -377,7 +353,7 @@ void RequestExecuter::registerNewPositionTrip(int tripId, int pointId, DroneData
     LOG_F(INFO, "image size : %ld", imagesize);
     auto image = dataInput->receiveBigMessage<unsigned char>(imagesize);
     // string str = str.assign(image.begin(), image.end());
-    LOG_F(INFO, "image : %s", image);
+    // LOG_F(INFO, "image : %s", image);
 
     // image save
     if (image.size() != imagesize)
@@ -385,13 +361,17 @@ void RequestExecuter::registerNewPositionTrip(int tripId, int pointId, DroneData
         LOG_F(INFO, "received size : %ld --- awaited size : %ld", image.size(), imagesize);
         // throw runtime_error("size not valid !");
     }
+    auto start = chrono::steady_clock::now();
     registerImage(tripId, pointId, image, idLaunch);
-    LOG_F(INFO, "end of register method");
+    auto end = chrono::steady_clock::now();
+    long elapsed = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    LOG_F(INFO, "end of register method (image registration took %ld milliseconds)", elapsed);
 }
 
 void RequestExecuter::executeEndTripSaveRequest(endTripSaveRequest *endTripSaveRequest)
 {
     LOG_F(INFO, "Send to client that the trip is saved");
+    imageSaverHolder->flush();
     EndTripSaveResponse response = EndTripSaveResponse(true);
     nlohmann::json responseJson = converter.convertToSendRequest(&response);
     dataInput->sendMessage(responseJson.dump());

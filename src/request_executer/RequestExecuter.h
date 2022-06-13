@@ -17,6 +17,7 @@
 #include "../messages/messagetype.h"
 #include <fstream>
 #include "../messages/response/tripLaunchResponse.h"
+#include "threads/bridges/ImageSaver_MessageHolder.h"
 
 
 class RequestExecuter
@@ -51,7 +52,13 @@ public:
 
     std::shared_ptr<TCPSocket> dataOutput;
 
-    RequestExecuter(ConfigParams conf, std::shared_ptr<TCPSocket> inputSocket, std::shared_ptr<TCPSocket> outputSocket);
+    std::shared_ptr<ImageSaver_MessageHolder> imageSaverHolder;
+
+    RequestExecuter(ConfigParams conf, 
+        std::shared_ptr<TCPSocket> inputSocket, 
+        std::shared_ptr<TCPSocket> outputSocket,
+        std::shared_ptr<ImageSaver_MessageHolder> imageSaverHolder
+    );
 
     ~RequestExecuter();
 

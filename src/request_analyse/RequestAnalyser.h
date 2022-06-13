@@ -18,13 +18,19 @@
 #include "../messages/messagetype.h"
 #include "../request_executer/RequestExecuter.h"
 
+#include "threads/bridges/ImageSaver_MessageHolder.h"
+
 class RequestAnalyser
 {
 
 public:
     RequestAnalyser();
 
-    RequestAnalyser(ConfigParams conf, std::shared_ptr<TCPSocket> inputSocket, std::shared_ptr<TCPSocket> outputSocket);
+    RequestAnalyser(ConfigParams conf, 
+        std::shared_ptr<TCPSocket> inputSocket, 
+        std::shared_ptr<TCPSocket> outputSocket,
+        std::shared_ptr<ImageSaver_MessageHolder> imageToSaveHolder
+    );
 
     ~RequestAnalyser();
 
